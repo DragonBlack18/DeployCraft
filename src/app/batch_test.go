@@ -263,3 +263,46 @@ func TestAllHashesCheckedBeforeAnyInstallerStarts(t *testing.T) {
 		t.Fatalf("first installer ran before verifying later payload: %v", proc.started)
 	}
 }
+
+func TestBatchStopOnErrorLeavesUnrelatedUntouched(t *testing.T) {
+	e, proc, selection := groupFixture(t, false)
+	proc.codes["base.exe"] = 17
+	report, err := e.RunBatch(context.Background(), selection, BatchOptions{
+		InstallOptions: labOptions(),
+		StopOnError:     true,
+	}, "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if report.ExitCode != domain.ExitPartial || len(proc.started) != 1 || proc.started[0] != "base.exe" {
+		t.Fatalf("stop-on-error ignored: report=%+v, processes=%v", report, proc.started)
+	}
+}
+
+func TestResumeAfterForceDoesNotRepeatAlreadyInstalledBarrier(t *testing.T) {
+	e, proc, selection := groupFixture(t, true)
+	options := BatchOptions{InstallOptions: labOptions(), Force: true}
+	first, err := e.RunBatch(context.Background(), selection, options, "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if first.ExitCode != domain.ExitReboot {
+		t.Fatalf("expected reboot barrier: %+v", first)
+	}
+	second, err := e.RunBatch(context.Background(), planner.Selection{}, options, first.RunID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if second.ExitCode != domain.ExitOK {
+		t.Fatalf("resume failed: %+v", second)
+	}
+	baseStarts := 0
+	for _, name := range proc.started {
+		if name == "base.exe" {
+			baseStarts++
+		}
+	}
+	if baseStarts != 1 {
+		t.Fatalf("force flag was reused during resume: %v", proc.started)
+	}
+}
