@@ -42,6 +42,7 @@ jobs:
     name: authenticode-sfx-windows
     needs: [quality]
     runs-on: windows-latest
+    timeout-minutes: 12
     steps:
       - name: Checkout (read-only)
         uses: actions/checkout@v7
@@ -75,8 +76,15 @@ jobs:
             $certificate = New-SelfSignedCertificate -Subject 'CN=DeployCraft CI Test' -Type CodeSigningCert -KeyAlgorithm RSA -KeyLength 2048 -CertStoreLocation 'Cert:\CurrentUser\My' -NotAfter (Get-Date).AddDays(2)
             $certificateFile = Join-Path $dir 'test-public.cer'
             Export-Certificate -Cert $certificate -FilePath $certificateFile | Out-Null
-            Import-Certificate -FilePath $certificateFile -CertStoreLocation 'Cert:\CurrentUser\Root' | Out-Null
-            Import-Certificate -FilePath $certificateFile -CertStoreLocation 'Cert:\CurrentUser\TrustedPublisher' | Out-Null
+            foreach ($storeName in @('Root','TrustedPublisher')) {
+              $store = New-Object System.Security.Cryptography.X509Certificates.X509Store($storeName, 'CurrentUser')
+              try {
+                $store.Open([System.Security.Cryptography.X509Certificates.OpenFlags]::ReadWrite)
+                $store.Add($certificate)
+              } finally { $store.Close() }
+            }
+            Write-Host 'CI certificate placed in temporary user trust stores'
+            Write-Host 'Signing finished SFX overlay after catalog verification'
             & ./scripts/sign/Sign-DeployCraft.ps1 -InputFile $unsigned -OutputFile $signed -Thumbprint $certificate.Thumbprint -ExpectedSHA256 $originalHash -LabNoTimestamp
             if (!(Test-Path -LiteralPath $signed)) { throw 'Signed binary missing' }
             if ((Get-FileHash -LiteralPath $unsigned -Algorithm SHA256).Hash -ne $originalHash) { throw 'Signer modified source' }
