@@ -1,0 +1,32 @@
+name: DeployCraft | formatador temporario fase3
+on:
+  push:
+    branches: [feature/fase3-kitbuilder-assinatura]
+permissions:
+  contents: write
+jobs:
+  gofmt:
+    if: github.actor == 'DragonBlack18'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: true
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+          cache: false
+      - name: Formatar Go e registrar somente mudancas de estilo
+        shell: bash
+        run: |
+          set -euo pipefail
+          find cmd src tools scripts -name '*.go' -print0 | xargs -0 gofmt -w
+          if git diff --quiet -- '*.go'; then
+            echo "Codigo ja formatado"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -u -- '*.go'
+          git commit -m "style: aplica gofmt na Fase 3A"
+          git push origin HEAD:feature/fase3-kitbuilder-assinatura
