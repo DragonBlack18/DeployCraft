@@ -306,3 +306,20 @@ func TestResumeAfterForceDoesNotRepeatAlreadyInstalledBarrier(t *testing.T) {
 		t.Fatalf("force flag was reused during resume: %v", proc.started)
 	}
 }
+
+func TestResumeRejectsChangedManifestEvenWhenVersionUnchanged(t *testing.T) {
+	engine, processes, selection := groupFixture(t, true)
+	options := BatchOptions{InstallOptions: labOptions()}
+	first, err := engine.RunBatch(context.Background(), selection, options, "")
+	if err != nil { t.Fatal(err) }
+	if first.ExitCode != domain.ExitReboot { t.Fatalf("expected interrupted run: %+v",first) }
+	before := len(processes.started)
+	changed := engine.Catalog.Packages["app"]
+	changed.Install.TimeoutSec += 1
+	engine.Catalog.Packages["app"] = changed
+	if _,err := engine.RunBatch(context.Background(), planner.Selection{}, options, first.RunID);err == nil ||
+		!strings.Contains(err.Error(),"E-RES-003") {
+		t.Fatalf("modified manifest accepted for resume: %v",err)
+	}
+	if len(processes.started)!=before { t.Fatal("installer executed after catalog mismatch") }
+}

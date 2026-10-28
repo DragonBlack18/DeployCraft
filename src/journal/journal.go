@@ -29,6 +29,7 @@ type Event struct {
 	Detail     string           `json:"detail,omitempty"`
 	KitRoot    string           `json:"kit,omitempty"`
 	Catalog    string           `json:"catalog,omitempty"`
+	CatalogDigest string       `json:"catalogDigest,omitempty"`
 	Selection  *StoredSelection `json:"selection,omitempty"`
 	Options    *StoredOptions   `json:"options,omitempty"`
 	Resumed    bool             `json:"resumed,omitempty"`
