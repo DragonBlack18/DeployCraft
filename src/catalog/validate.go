@@ -107,13 +107,22 @@ func validatePackage(p domain.Package) error {
 	if err := validateArgs(p.Install.Args); err != nil {
 		return err
 	}
-	for _, r := range [][]int{p.Install.SuccessCodes, p.Install.RebootCodes, p.Install.RetryCodes} {
-		seen := map[int]bool{}
-		for _, code := range r {
-			if seen[code] {
-				return fmt.Errorf("E-CAT-003 %s: exit code duplicado", p.ID)
+	// A Windows exit code must have exactly one interpretation.
+	// Overlapping success/reboot/retry lists would make retry behavior ambiguous.
+	classes := map[int]string{}
+	for _, group := range []struct {
+		name string
+		codes []int
+	}{
+		{name: "successCodes", codes: p.Install.SuccessCodes},
+		{name: "rebootCodes", codes: p.Install.RebootCodes},
+		{name: "retryCodes", codes: p.Install.RetryCodes},
+	} {
+		for _, code := range group.codes {
+			if previous, ok := classes[code]; ok {
+				return fmt.Errorf("E-CAT-003 %s: exit code %d presente em %s e %s", p.ID, code, previous, group.name)
 			}
-			seen[code] = true
+			classes[code] = group.name
 		}
 	}
 	if p.Detect.Match != "any" && p.Detect.Match != "all" || len(p.Detect.Rules) == 0 {

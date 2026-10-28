@@ -30,6 +30,7 @@ type InstallEngine struct {
 	IsAdmin                 func() (bool, error)
 	WindowsBuild            func() (int, error)
 	postCheckTimeout        time.Duration
+	retryWait               func(context.Context, time.Duration) error
 	labPlatformOverride     bool // used only by package-internal tests
 }
 type PreflightError struct {
@@ -226,26 +227,67 @@ func (e *InstallEngine) execute(ctx context.Context, store *journal.Store, runID
 	if err := os.WriteFile(filepath.Join(logDir, p.ID+".command.txt"), []byte(cmd.LogLine+"\n"), 0600); err != nil {
 		return fail("E-PRE-003", domain.ReasonExitCode, err.Error())
 	}
-	process, err := e.Process.Start(cmd)
-	if err != nil {
-		return fail("E-RUN-002", domain.ReasonExitCode, err.Error())
+	// Only codes listed in retryCodes may be retried, using the documented
+	// 15s/30s/60s backoff. Start failures, timeouts and integrity errors
+	// are never retried because their side effects are indeterminate.
+	backoffs := []time.Duration{15 * time.Second, 30 * time.Second, 60 * time.Second}
+	var exitCode int
+	var verdict domain.Verdict
+	for attempt := 0; ; attempt++ {
+		if err := ctx.Err(); err != nil {
+			return fail("E-RUN-001", domain.ReasonTimeout, "instalação cancelada antes da tentativa")
+		}
+		process, startErr := e.Process.Start(cmd)
+		if startErr != nil {
+			return fail("E-RUN-002", domain.ReasonExitCode, startErr.Error())
+		}
+		stepCtx, cancel := context.WithTimeout(ctx, time.Duration(p.Install.TimeoutSec)*time.Second)
+		code, waitErr := process.Wait(stepCtx)
+		cancel()
+		if errors.Is(waitErr, context.DeadlineExceeded) || errors.Is(waitErr, context.Canceled) {
+			return fail("E-RUN-001", domain.ReasonTimeout, "tempo limite da instalação esgotado ou cancelado")
+		}
+		if waitErr != nil {
+			return fail("E-RUN-003", domain.ReasonExitCode, waitErr.Error())
+		}
+		exitCode = code
+		result.ExitCode = &exitCode
+		verdict, _ = d.Interpret(exitCode, p)
+		if verdict != domain.VerdictRetry {
+			break
+		}
+		if attempt >= len(backoffs) {
+			return fail("E-RUN-003", domain.ReasonExitCode,
+				fmt.Sprintf("código transitório %d persistiu após %d novas tentativas", exitCode, len(backoffs)))
+		}
+		delay := backoffs[attempt]
+		if err := store.Append(journal.Event{
+			RunID: runID, Event: "step.retry", Package: p.ID,
+			ExitCode: &exitCode, Detail: fmt.Sprintf("tentativa %d/%d após %s", attempt+1, len(backoffs), delay),
+		}); err != nil {
+			return fail("E-RUN-002", domain.ReasonExitCode, "falha ao registrar tentativa: "+err.Error())
+		}
+		waiter := e.retryWait
+		if waiter == nil {
+			waiter = waitRetryContext
+		}
+		if err := waiter(ctx, delay); err != nil {
+			return fail("E-RUN-001", domain.ReasonTimeout, "repetição cancelada: "+err.Error())
+		}
+		// Another installer may have completed while this attempt was
+		// waiting. Re-detect instead of blindly executing the same command.
+		now := detect.NewScan(e.Registry, e.Paths).Detect(p)
+		if now.State == domain.StateInstalled {
+			result.Outcome = domain.OutcomeInstalled
+			result.Detail = "detectado como instalado durante espera de nova tentativa"
+			return result
+		}
+		if now.State == domain.StateUnknown {
+			return fail("E-PRE-006", domain.ReasonNotDetected, "detecção indeterminada após código transitório")
+		}
 	}
-	timeout := time.Duration(p.Install.TimeoutSec) * time.Second
-	stepCtx, cancel := context.WithTimeout(ctx, timeout)
-	defer cancel()
-	exitCode, err := process.Wait(stepCtx)
-	if errors.Is(err, context.DeadlineExceeded) || errors.Is(err, context.Canceled) {
-		return fail("E-RUN-001", domain.ReasonTimeout, "tempo limite da instalação esgotado ou cancelado")
-	}
-	if err != nil {
-		return fail("E-RUN-003", domain.ReasonExitCode, err.Error())
-	}
-	result.ExitCode = &exitCode
-	verdict, _ := d.Interpret(exitCode, p)
 	switch verdict {
 	case domain.VerdictSuccess, domain.VerdictSuccessReboot:
-	case domain.VerdictRetry:
-		return fail("E-RUN-003", domain.ReasonExitCode, "repetição automática de código transitório será implementada na Fase 4")
 	default:
 		return fail("E-RUN-003", domain.ReasonExitCode, fmt.Sprintf("instalador retornou código %d", exitCode))
 	}

@@ -8,6 +8,7 @@
 - **Fase 2 (LAB):** perfis, dependências, conflitos, dry-run, execução em lote e retomada manual pelo runId. Reinício real de VM e RunOnce ainda pendentes.
 - **Fase 3A (LAB):** importação e atualização de instaladores, montagem de kit em pasta e assinatura Ed25519 do catálogo com chave pública fixa no motor.
 - **Fase 3B (LAB):** construção de SFX único com payloads anexados em formato não comprimido, leitura em streaming sem extração antecipada e cache somente do catálogo. Authenticode ainda pendente.
+- **Fase 4A (LAB):** nova tentativa somente para códigos em `retryCodes`, com esperas 15/30/60 s, re-detecção antes da próxima tentativa e cancelamento seguro. Ver `docs/FASE4A-LAB.md`.
 - **Pendências obrigatórias:** validação E2E em máquina virtual limpa com instaladores reais, assinatura Authenticode, proteção do staging/controle de árvore, planejamento de dependências, retomada após reinício e interface desktop.
 
 ## Dois ambientes
