@@ -25,7 +25,7 @@ import (
 	"github.com/DragonBlack18/DeployCraft/src/runner"
 )
 
-var version = "0.3.0-dev"
+var version = "0.3.1-lab"
 
 // Set at build time with -ldflags "-X main.trustedCatalogPublicKeyHex=<hex>".
 // An empty value only allows explicitly confirmed, unsigned LAB mode.
