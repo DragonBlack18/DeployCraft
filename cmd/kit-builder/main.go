@@ -166,14 +166,21 @@ func main() {
 		f := flag.NewFlagSet("build", flag.ExitOnError)
 		root := f.String("root", ".", "raiz do repositório")
 		out := f.String("out", "", "novo destino (não deve existir)")
-		mode := f.String("mode", "folder", "folder; sfx planejado para fase posterior")
+		mode := f.String("mode", "folder", "folder ou sfx (LAB; sem Authenticode)")
 		key := f.String("private-key", "", "chave privada Ed25519 fora do Git")
 		lab := f.Bool("lab-unsigned", false, "kit de laboratório explicitamente não assinado")
 		_ = f.Parse(os.Args[2:])
-		if *mode != "folder" {
-			fatal(fmt.Errorf("E-BLD-007: modo %q não implementado; não será gerado arquivo SFX inválido", *mode))
+		options := kitbuilder.BuildOptions{Root: *root, Destination: *out, PrivateKeyPath: *key, LabUnsigned: *lab}
+		var report kitbuilder.BuildReport
+		var err error
+		switch *mode {
+		case "folder":
+			report, err = kitbuilder.BuildFolder(options)
+		case "sfx":
+			report, err = kitbuilder.BuildSFX(options)
+		default:
+			fatal(fmt.Errorf("E-BLD-007: modo %q desconhecido", *mode))
 		}
-		report, err := kitbuilder.BuildFolder(kitbuilder.BuildOptions{Root: *root, Destination: *out, PrivateKeyPath: *key, LabUnsigned: *lab})
 		if err != nil {
 			fatal(err)
 		}
