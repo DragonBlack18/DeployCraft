@@ -34,6 +34,9 @@ jobs:
           cache: false
       - name: Quality gate
         run: go run ./scripts/check
+      - name: Race detector (Linux)
+        if: runner.os == 'Linux'
+        run: go test -race ./...
 
   bundle:
     name: unsigned-foundation-${{ github.ref_name }}
