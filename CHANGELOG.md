@@ -1,5 +1,17 @@
 # Changelog
 
+## Não liberado — Fase 3B (SFX em laboratório) — 2026-10-28
+
+- `kit-builder build --mode sfx` gera EXE Windows único com arquivos não comprimidos, índice JSON e rodapé com digest SHA-256. Não sobrescreve versões existentes.
+- `PackSource` acessa entradas por offset, com leitura em streaming, recusa de travessia, sobreposição e índices adulterados.
+- Motor SFX carrega somente os JSONs de catálogo e assinatura em cache estável e valida Ed25519 antes de executar ações; os instaladores permanecem no EXE até serem copiados seletivamente para o staging.
+- O mesmo motor suporta `PayloadSource` de pasta ou SFX, sem alterar os drivers MSI/EXE.
+- Testes Linux/Windows cobrem corrupção, caminhos perigosos, integridade dos arquivos e inicialização real da CLI SFX no Windows.
+- Nenhum payload de terceiros, certificado privado ou chave de assinatura foi incorporado ao repositório.
+
+**Aviso:** o EXE SFX ainda NÃO recebe Authenticode. É um artefato **LAB**, sujeito a homologação com MSI/EXE reais, certificado de código e testes após reinicialização. A `main` não receberá a Fase 3B antes de aprovação dos gates.
+
+
 ## Não liberado — Fase 3A (kit-builder + assinatura LAB) — 2026-10-28
 
 - Importação local de MSI/EXE com `kit-builder add` e `update`: catálogo JSON, versão, hash SHA-256, origem, switches e detecção explícitos.
