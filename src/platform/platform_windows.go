@@ -26,7 +26,15 @@ func NewPaths() domain.Paths       { return pathsAdapter{} }
 func (pathsAdapter) ProgramData() string { return os.Getenv("ProgramData") }
 func (pathsAdapter) Temp() string        { return os.TempDir() }
 func (pathsAdapter) Expand(text string) string {
-	return os.Expand(text, func(key string) string { return os.Getenv(key) })
+	parts:=strings.Split(text,"%")
+	for i:=1;i<len(parts);i+=2 {
+		if value,found:=os.LookupEnv(parts[i]);found {
+			parts[i]=value
+		}else{
+			parts[i]="%"+parts[i]+"%"
+		}
+	}
+	return strings.Join(parts,"")
 }
 
 func splitKey(key string) (syscall.Handle, string, error) {

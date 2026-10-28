@@ -125,8 +125,8 @@ func (e *InstallEngine) InstallOne(ctx context.Context,id string,opt InstallOpti
 	if err:=store.WriteReport(idRun,report);err!=nil{return report,err}
 	return report,nil
 }
-func (e *InstallEngine) execute(ctx context.Context,store *journal.Store,runID string,p domain.Package)domain.Result{
-	result:=domain.Result{PackageID:p.ID}
+func (e *InstallEngine) execute(ctx context.Context,store *journal.Store,runID string,p domain.Package)(result domain.Result){
+	result=domain.Result{PackageID:p.ID}
 	fail:=func(code string, reason domain.FailReason,detail string)domain.Result{
 		result.Outcome=domain.OutcomeFailed
 		result.Code=code

@@ -9,6 +9,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"path"
 	"strings"
 
 	"github.com/DragonBlack18/DeployCraft/src/domain"
@@ -28,7 +29,7 @@ func isContained(root,child string) bool {
 func safeSource(root,relative string)(string,error){
 	if relative=="" || filepath.IsAbs(relative) || filepath.VolumeName(relative)!="" ||
 		strings.Contains(relative,"\\") || strings.Contains(relative,":") ||
-		filepath.Clean(relative)!=relative || strings.HasPrefix(relative,"..") {
+		path.Clean(relative)!=relative || strings.HasPrefix(relative,"..") {
 		return "",fmt.Errorf("caminho de payload inválido")
 	}
 	rootAbs,err:=filepath.Abs(root);if err!=nil{return "",err}

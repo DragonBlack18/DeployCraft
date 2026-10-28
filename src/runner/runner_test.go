@@ -47,7 +47,7 @@ func TestNoShellInterpolation(t *testing.T){
 }
 func TestTimeoutKillsDirectProcess(t *testing.T){
 	var cmd domain.Command
-	if runtime.GOOS=="windows"{cmd=domain.Command{Exe:"cmd.exe",Args:[]string{"/C","ping -n 8 127.0.0.1 >NUL"}}}else{cmd=domain.Command{Exe:"/bin/sleep",Args:[]string{"8"}}}
+	if runtime.GOOS=="windows"{cmd=domain.Command{Exe:"powershell.exe",Args:[]string{"-NoProfile","-Command","Start-Sleep -Seconds 8"}}}else{cmd=domain.Command{Exe:"/bin/sleep",Args:[]string{"8"}}}
 	proc,err:=New().Start(cmd)
 	if err!=nil{t.Fatal(err)}
 	ctx,cancel:=context.WithTimeout(context.Background(),80*time.Millisecond);defer cancel()
