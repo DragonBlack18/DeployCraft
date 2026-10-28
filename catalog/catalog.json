@@ -1,0 +1,12 @@
+{
+  "schema": 1,
+  "catalogVersion": "2026.10.1",
+  "packages": [],
+  "profiles": [
+    {"id": "essencial", "name": "Essencial", "packages": []},
+    {"id": "escritorio", "name": "Escritório", "extends": "essencial", "packages": []},
+    {"id": "desenvolvimento", "name": "Desenvolvimento", "extends": "escritorio", "packages": []},
+    {"id": "suporte-ti", "name": "Suporte TI", "extends": "escritorio", "packages": []},
+    {"id": "industrial", "name": "Industrial", "extends": "essencial", "packages": []}
+  ]
+}
