@@ -77,7 +77,7 @@ jobs:
             $certificateFile = Join-Path $dir 'test-public.cer'
             Export-Certificate -Cert $certificate -FilePath $certificateFile | Out-Null
             foreach ($storeName in @('Root','TrustedPublisher')) {
-              $store = New-Object System.Security.Cryptography.X509Certificates.X509Store($storeName, 'CurrentUser')
+              $store = [System.Security.Cryptography.X509Certificates.X509Store]::new($storeName, [System.Security.Cryptography.X509Certificates.StoreLocation]::CurrentUser)
               try {
                 $store.Open([System.Security.Cryptography.X509Certificates.OpenFlags]::ReadWrite)
                 $store.Add($certificate)
