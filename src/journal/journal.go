@@ -27,6 +27,11 @@ type Event struct {
 	DurationMs int64     `json:"durationMs,omitempty"`
 	ExitCode   *int      `json:"exitCode,omitempty"`
 	Detail     string    `json:"detail,omitempty"`
+	KitRoot string `json:"kit,omitempty"`
+	Catalog string `json:"catalog,omitempty"`
+	Selection *StoredSelection `json:"selection,omitempty"`
+	Options *StoredOptions `json:"options,omitempty"`
+	Resumed bool `json:"resumed,omitempty"`
 }
 type Store struct {
 	Root string
