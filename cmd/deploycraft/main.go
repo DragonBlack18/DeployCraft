@@ -25,7 +25,11 @@ import (
 	"github.com/DragonBlack18/DeployCraft/src/runner"
 )
 
-var version = "0.3.1-lab"
+var version = "0.3.2-sfx-lab"
+
+// A SFX build pins "1"; a broken package then fails closed instead of
+// silently treating the executable's directory as a folder kit.
+var sfxExpected string
 
 // Set at build time with -ldflags "-X main.trustedCatalogPublicKeyHex=<hex>".
 // An empty value only allows explicitly confirmed, unsigned LAB mode.
@@ -163,6 +167,19 @@ func main() {
 		usage()
 		os.Exit(domain.ExitUsage)
 	}
+	var payloadSource domain.PayloadSource
+	if sfxExpected == "1" {
+		if *kit != "." {
+			exitErr(fmt.Errorf("E-SFX-001: kit externo não é permitido com SFX"))
+		}
+		embeddedRoot, reader, err := openEmbeddedKit()
+		if err != nil {
+			exitErr(err)
+		}
+		defer reader.Close()
+		*kit = embeddedRoot
+		payloadSource = reader
+	}
 	c, err := catalog.Load(*kit)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
@@ -217,6 +234,7 @@ func main() {
 		Registry: platform.NewRegistry(), Paths: platform.NewPaths(), Process: runner.New(),
 		IsAdmin: platform.IsAdministrator, WindowsBuild: platform.WindowsBuild,
 		TrustedCatalogPublicKey: trustedKey,
+		PayloadSource: payloadSource,
 	}
 	selection := planner.Selection{Profile: *profile, IDs: flags.Args()}
 	planOptions := planner.Options{Force: *force, UpgradeOutdated: true}
