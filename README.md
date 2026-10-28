@@ -4,7 +4,8 @@
 
 ## Estado atual
 - **Fase 0 (Fundamentos):** concluída com GitHub Actions em Windows e Linux.
-- **Fase 1 (MVP):** em validação de laboratório, *não homologada para produção*. Há detecção real Windows, drivers MSI/EXE, staging SHA-256, runner e journal.
+- **Fase 1 (MVP):** validada em laboratório por GitHub Actions, *não homologada para produção*. Há detecção real Windows, drivers MSI/EXE, staging SHA-256, runner e journal.
+- **Fase 2 (LAB):** perfis, dependências, conflitos, dry-run, execução em lote e retomada manual pelo runId. Reinício real de VM e RunOnce ainda pendentes.
 - **Pendências obrigatórias:** validação E2E em máquina virtual limpa com instaladores reais, assinatura de catálogo, proteção do staging/controle de árvore, planejamento de dependências, retomada após reinício e interface desktop.
 
 ## Dois ambientes
@@ -24,13 +25,16 @@ go run ./scripts/check
 go run ./cmd/kit-builder lint --root .
 go run ./cmd/kit-builder verify --root .
 go run ./cmd/deploycraft list --kit .
+go run ./cmd/deploycraft plan --kit . --profile desenvolvimento
 ```
 
 ## Teste de instalação em Windows VM somente
 ```powershell
 go run ./cmd/deploycraft status --kit .
+go run ./cmd/deploycraft install --kit . --dry-run --profile desenvolvimento
 go run ./cmd/deploycraft install --kit . --lab-unsigned-catalog --dry-run <id>
-go run ./cmd/deploycraft install --kit . --lab-unsigned-catalog --yes <id>
+go run ./cmd/deploycraft install --kit . --profile desenvolvimento --yes --lab-unsigned-catalog
+go run ./cmd/deploycraft resume --kit . --yes --lab-unsigned-catalog <runId>
 ```
 
 **Aviso:** requer PowerShell elevado, payload autêntico local, manifesto completo e `<id>` cadastrado. Os perfis começam vazios e o projeto não inclui nenhum instalador real. A exceção `--lab-unsigned-catalog` serve apenas a teste descartável, nunca a máquinas corporativas.
