@@ -28,68 +28,8 @@ type RunHistory struct {
 	LastExitCode *int
 }
 
-var runIDPattern = regexp.MustCompile(`^[a-f0-9]{32}package journal
-
-import (
-	"bufio"
-	"encoding/json"
-	"fmt"
-	"io"
-	"os"
-	"path/filepath"
-	"regexp"
-	"reflect"
-)
-
-// StoredSelection/Options record what the operator approved. No secret is persisted.
-type StoredSelection struct {
-	Profile string   `json:"profile,omitempty"`
-	IDs     []string `json:"ids,omitempty"`
-}
-type StoredOptions struct {
-	Force       bool `json:"force"`
-	StopOnError bool `json:"stopOnError"`
-}
-
-// RunHistory is recovered from append-only events rather than from a cursor.
-type RunHistory struct {
-	Start        Event
-	Results      map[string]Event
-	LastExitCode *int
-}
-
-)
-var digestPattern = regexp.MustCompile(`^[a-f0-9]{64}package journal
-
-import (
-	"bufio"
-	"encoding/json"
-	"fmt"
-	"io"
-	"os"
-	"path/filepath"
-	"regexp"
-	"reflect"
-)
-
-// StoredSelection/Options record what the operator approved. No secret is persisted.
-type StoredSelection struct {
-	Profile string   `json:"profile,omitempty"`
-	IDs     []string `json:"ids,omitempty"`
-}
-type StoredOptions struct {
-	Force       bool `json:"force"`
-	StopOnError bool `json:"stopOnError"`
-}
-
-// RunHistory is recovered from append-only events rather than from a cursor.
-type RunHistory struct {
-	Start        Event
-	Results      map[string]Event
-	LastExitCode *int
-}
-
-)
+var runIDPattern = regexp.MustCompile(`^[a-f0-9]{32}$`)
+var digestPattern = regexp.MustCompile(`^[a-f0-9]{64}$`)
 
 // ReadRun ignores only a truncated final line. Any corrupt complete line
 // or missing start metadata fails closed, even when another run owns the line.
