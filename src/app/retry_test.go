@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/DragonBlack18/DeployCraft/src/domain"
-	"github.com/DragonBlack18/DeployCraft/src/journal"
 )
 
 type sequenceProcess struct {
@@ -49,7 +48,11 @@ func TestTransientCodeRetriesThenDetectsRealInstall(t *testing.T){
 	}
 	// The run must retain its journal and report, including the final attempt.
 	if _,err:=os.Stat(filepath.Join(e.StateRoot,"logs",report.RunID,"report.json"));err!=nil{t.Fatal(err)}
-	_ = journal.New(e.StateRoot)
+	logBytes,err:=os.ReadFile(filepath.Join(e.StateRoot,"state","journal.jsonl"))
+	if err!=nil{t.Fatal(err)}
+	if got:=strings.Count(string(logBytes), `"event":"step.retry"`);got!=2{
+		t.Fatalf("expected 2 audited retry events, got %d",got)
+	}
 }
 func TestTransientRetryExhaustionNeverSucceeds(t *testing.T){
 	e,f,_:=newFixture(t)

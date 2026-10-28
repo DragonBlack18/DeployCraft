@@ -91,3 +91,19 @@ func TestSafeRelative(t *testing.T) {
 		}
 	}
 }
+
+func TestRejectsExitCodeCollisionAcrossCategories(t *testing.T) {
+	for _,collision := range []int{0,3010} {
+		p:=examplePackage("alpha")
+		if collision==0 {
+			p.Install.RetryCodes=[]int{0}
+		}else{
+			p.Install.RebootCodes=[]int{3010}
+			p.Install.RetryCodes=[]int{3010}
+		}
+		if _,err:=Load(writeCatalog(t,[]domain.Package{p},nil));err==nil ||
+			!strings.Contains(err.Error(),"E-CAT-003"){
+			t.Fatalf("exit code collision %d accepted: %v",collision,err)
+		}
+	}
+}
