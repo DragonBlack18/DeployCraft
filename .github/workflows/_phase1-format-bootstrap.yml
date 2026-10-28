@@ -1,0 +1,33 @@
+# One-time formatter for the Phase 1 feature branch; removed after execution.
+name: DeployCraft | phase1 formatting bootstrap
+on:
+  push:
+    branches: [feature/fase1-execucao-segura]
+permissions:
+  contents: write
+jobs:
+  format:
+    if: github.actor == 'DragonBlack18'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: true
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+          cache: false
+      - name: Format and commit Go code
+        shell: bash
+        run: |
+          set -euo pipefail
+          find cmd src scripts tools -name '*.go' -print0 | xargs -0 gofmt -w
+          if git diff --quiet -- '*.go'; then
+            echo "All Go files already formatted"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -u -- '*.go'
+          git commit -m "style: normaliza gofmt na fase 1"
+          git push origin HEAD:feature/fase1-execucao-segura
