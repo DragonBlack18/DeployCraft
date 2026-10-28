@@ -19,8 +19,8 @@ import (
 
 // BuildOptions creates a new, immutable destination folder.
 type BuildOptions struct {
-	Root, Destination, PrivateKeyPath string
-	LabUnsigned                       bool
+	Root, Destination, PrivateKeyPath, SourceRoot string
+	LabUnsigned                                   bool
 }
 type BuildReport struct {
 	Destination    string
@@ -184,7 +184,18 @@ func compileWindowsEngine(root, out, publicHex string) error {
 
 // BuildFolder checks source hashes, creates a new kit, optionally signs its catalog,
 // and compiles the matching Windows engine with the PUBLIC key pinned into it.
-func BuildFolder(o BuildOptions) (BuildReport, error) { return buildFolder(o, compileWindowsEngine) }
+func BuildFolder(o BuildOptions) (BuildReport, error) {
+	if o.SourceRoot == "" {
+		return buildFolder(o, compileWindowsEngine)
+	}
+	sourceRoot, err := absRoot(o.SourceRoot)
+	if err != nil {
+		return BuildReport{}, err
+	}
+	return buildFolder(o, func(_ string, out, key string) error {
+		return compileWindowsEngine(sourceRoot, out, key)
+	})
+}
 func buildFolder(o BuildOptions, compiler func(root, out, key string) error) (BuildReport, error) {
 	report := BuildReport{}
 	root, err := absRoot(o.Root)

@@ -100,7 +100,13 @@ func (e *InstallEngine) RunBatch(ctx context.Context, sel planner.Selection, opt
 			selected.Packages[p.ID] = p
 		}
 	}
-	if issues := catalog.Verify(e.KitRoot, selected); len(issues) > 0 {
+	var issues []catalog.VerifyIssue
+	if e.PayloadSource != nil {
+		issues = catalog.VerifySource(e.PayloadSource, selected)
+	} else {
+		issues = catalog.Verify(e.KitRoot, selected)
+	}
+	if len(issues) > 0 {
 		first := issues[0]
 		return report, &PreflightError{Code: first.Code, Reason: first.PackageID + ": " + first.Problem}
 	}
