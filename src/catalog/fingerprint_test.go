@@ -49,3 +49,21 @@ func TestFingerprintRejectsMismatchedMapID(t *testing.T) {
 		t.Fatal("mismatched map ID accepted")
 	}
 }
+
+func TestFingerprintIncludesEffectiveProfileMap(t *testing.T) {
+	c := domain.Catalog{
+		Index: domain.Index{Schema: 1, CatalogVersion: "2026.10.1"},
+		Packages: map[string]domain.Package{},
+		Profiles: map[string]domain.Profile{
+			"dev": {ID: "dev", Name: "Developer", Packages: []string{"alpha"}},
+		},
+	}
+	first, err := Fingerprint(c)
+	if err != nil { t.Fatal(err) }
+	profile := c.Profiles["dev"]
+	profile.Packages = []string{"beta"}
+	c.Profiles["dev"] = profile
+	second, err := Fingerprint(c)
+	if err != nil { t.Fatal(err) }
+	if first == second { t.Fatal("modified effective profile did not change digest") }
+}

@@ -17,6 +17,7 @@ func Fingerprint(c domain.Catalog) (string, error) {
 	type content struct {
 		Index    domain.Index     `json:"index"`
 		Packages []domain.Package `json:"packages"`
+		Profiles []domain.Profile `json:"profiles"`
 	}
 	ids := make([]string, 0, len(c.Packages))
 	for id := range c.Packages {
@@ -31,7 +32,20 @@ func Fingerprint(c domain.Catalog) (string, error) {
 		}
 		payload.Packages = append(payload.Packages, p)
 	}
-	raw, err := json.Marshal(payload)
+	profileIDs := make([]string, 0, len(c.Profiles))
+	for id := range c.Profiles {
+		profileIDs = append(profileIDs, id)
+	}
+	sort.Strings(profileIDs)
+	payload.Profiles = make([]domain.Profile, 0, len(profileIDs))
+	for _, id := range profileIDs {
+		profile := c.Profiles[id]
+		if profile.ID != id {
+			return "", fmt.Errorf("E-CAT-005: mapa e perfil discordam: %s", id)
+		}
+		payload.Profiles = append(payload.Profiles, profile)
+	}
+		raw, err := json.Marshal(payload)
 	if err != nil {
 		return "", fmt.Errorf("E-CAT-003: catálogo não serializável: %w", err)
 	}
