@@ -32,7 +32,8 @@ func usage() {
 	fmt.Fprintln(os.Stderr, "  build --mode folder --root . --out dist/kit-1 --private-key caminho-fora-do-repo")
 	fmt.Fprintln(os.Stderr, "  build --mode folder --root . --out dist/kit-lab --lab-unsigned")
 	fmt.Fprintln(os.Stderr, "  report --root .")
-	fmt.Fprintln(os.Stderr, "  SFX não implementado nesta etapa; jamais usar binários de terceiros no Git.")
+	fmt.Fprintln(os.Stderr, "  build --mode sfx --root . --out dist/DeployCraft-SFX.exe --private-key caminho-fora-do-repo")
+	fmt.Fprintln(os.Stderr, "  SFX ainda LAB: Authenticode e teste de reinício real pendentes.")
 }
 func main() {
 	if len(os.Args) < 2 {
