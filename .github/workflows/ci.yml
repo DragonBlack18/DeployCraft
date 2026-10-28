@@ -38,9 +38,76 @@ jobs:
         if: runner.os == 'Linux'
         run: go test -race ./...
 
+  authenticode:
+    name: authenticode-sfx-windows
+    needs: [quality]
+    runs-on: windows-latest
+    steps:
+      - name: Checkout (read-only)
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Setup Go
+        uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+          cache: false
+      - name: Sign SFX with ephemeral LAB certificate and verify signed PE
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $dir = Join-Path $env:RUNNER_TEMP ('deploycraft-sign-' + [guid]::NewGuid().ToString('N'))
+          New-Item -Path $dir -ItemType Directory -Force | Out-Null
+          $key = Join-Path $dir 'catalog.private.pem'
+          $public = Join-Path $dir 'catalog.public.pem'
+          $unsigned = Join-Path $dir 'DeployCraft-unsigned.exe'
+          $signed = Join-Path $dir 'DeployCraft-signed.exe'
+          $tampered = Join-Path $dir 'DeployCraft-tampered.exe'
+          $certificate = $null
+          try {
+            go run ./cmd/kit-builder keygen --root . --private $key --public $public
+            if ($LASTEXITCODE -ne 0) { throw 'Keygen failed' }
+            go run ./cmd/kit-builder build --mode sfx --root . --out $unsigned --private-key $key
+            if ($LASTEXITCODE -ne 0) { throw 'SFX build failed' }
+            go run ./cmd/kit-builder inspect-sfx --file $unsigned
+            if ($LASTEXITCODE -ne 0) { throw 'SFX verification before signing failed' }
+            $originalHash = (Get-FileHash -LiteralPath $unsigned -Algorithm SHA256).Hash
+            $certificate = New-SelfSignedCertificate -Subject 'CN=DeployCraft CI Test' -Type CodeSigningCert -KeyAlgorithm RSA -KeyLength 2048 -CertStoreLocation 'Cert:\CurrentUser\My' -NotAfter (Get-Date).AddDays(2)
+            $certificateFile = Join-Path $dir 'test-public.cer'
+            Export-Certificate -Cert $certificate -FilePath $certificateFile | Out-Null
+            Import-Certificate -FilePath $certificateFile -CertStoreLocation 'Cert:\CurrentUser\Root' | Out-Null
+            Import-Certificate -FilePath $certificateFile -CertStoreLocation 'Cert:\CurrentUser\TrustedPublisher' | Out-Null
+            & ./scripts/sign/Sign-DeployCraft.ps1 -InputFile $unsigned -OutputFile $signed -Thumbprint $certificate.Thumbprint -ExpectedSHA256 $originalHash -LabNoTimestamp
+            if (!(Test-Path -LiteralPath $signed)) { throw 'Signed binary missing' }
+            if ((Get-FileHash -LiteralPath $unsigned -Algorithm SHA256).Hash -ne $originalHash) { throw 'Signer modified source' }
+            & ./scripts/sign/Test-Authenticode.ps1 -File $signed -ExpectedThumbprint $certificate.Thumbprint
+            go run ./cmd/kit-builder inspect-sfx --file $signed
+            if ($LASTEXITCODE -ne 0) { throw 'Signed SFX pack unreadable' }
+            $listOutput = & $signed list | Out-String
+            if ($LASTEXITCODE -ne 0 -or $listOutput -notmatch 'Cat.logo') { throw 'Signed SFX cannot read authenticated catalog' }
+            [IO.File]::Copy($signed, $tampered, $false)
+            $stream = [IO.File]::Open($tampered,[IO.FileMode]::Open,[IO.FileAccess]::ReadWrite,[IO.FileShare]::None)
+            try {
+              if ($stream.Length -lt 4097) { throw 'Fixture unexpectedly small' }
+              $stream.Position = 4096
+              $oldByte = $stream.ReadByte()
+              $stream.Position = 4096
+              $stream.WriteByte([byte]($oldByte -bxor 1))
+            } finally { $stream.Dispose() }
+            if ((Get-AuthenticodeSignature -LiteralPath $tampered).Status -eq 'Valid') { throw 'Tampered signed motor accepted' }
+            Write-Host 'PASS: signed SFX reader, editor, SHA-256 and tamper rejection'
+          } finally {
+            if ($null -ne $certificate) {
+              foreach ($store in @('CurrentUser\TrustedPublisher','CurrentUser\Root','CurrentUser\My')) {
+                $path = ('Cert:\' + $store + '\' + $certificate.Thumbprint)
+                if (Test-Path -LiteralPath $path) { Remove-Item -LiteralPath $path -Force -ErrorAction SilentlyContinue }
+              }
+            }
+          }
+
   bundle:
     name: unsigned-foundation-${{ github.ref_name }}
-    needs: [quality]
+    needs: [quality, authenticode]
     if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
     runs-on: windows-latest
     environment:
