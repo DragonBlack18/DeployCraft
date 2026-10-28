@@ -269,7 +269,7 @@ func TestBatchStopOnErrorLeavesUnrelatedUntouched(t *testing.T) {
 	proc.codes["base.exe"] = 17
 	report, err := e.RunBatch(context.Background(), selection, BatchOptions{
 		InstallOptions: labOptions(),
-		StopOnError:     true,
+		StopOnError:    true,
 	}, "")
 	if err != nil {
 		t.Fatal(err)
