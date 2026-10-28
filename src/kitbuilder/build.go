@@ -120,8 +120,7 @@ func buildFolder(o BuildOptions,compiler func(root,out,key string)error)(BuildRe
  files:=[]string{"catalog/catalog.json"}
  for _,rel:=range c.Index.Packages{files=append(files,"catalog/"+rel)}
  for _,p:=range c.Packages {
-  if p.Payload.Kind=="dir"{for _,f:=range p.Payload.Files{files=append(files,p.Payload.Path+"/"+f.Path)}}
-  else {files=append(files,p.Payload.Path)}
+  if p.Payload.Kind=="dir"{for _,f:=range p.Payload.Files{files=append(files,p.Payload.Path+"/"+f.Path)}} else {files=append(files,p.Payload.Path)}
  }
  sort.Strings(files)
  for _,rel:=range files{

@@ -60,8 +60,9 @@ func checkInput(file string,driver string)(string,error){
 	return abs,nil
 }
 func stagedCopy(source,dest string)(hash string,size int64,err error){
-	if _,err:=os.Lstat(dest);err==nil{return "",0,fmt.Errorf("E-BLD-002: destino já existe: %s",dest)}
-	if !os.IsNotExist(err){return "",0,err}
+	_,statErr:=os.Lstat(dest)
+	if statErr==nil{return "",0,fmt.Errorf("E-BLD-002: destino já existe: %s",dest)}
+	if !os.IsNotExist(statErr){return "",0,statErr}
 	if err:=os.MkdirAll(filepath.Dir(dest),0700);err!=nil{return "",0,err}
 	in,err:=os.Open(source);if err!=nil{return "",0,err}
 	defer in.Close()
@@ -170,15 +171,15 @@ func Add(o ImportOptions)(domain.Package,error){
 		err=fmt.Errorf("E-BLD-002: manifesto já existe");return empty,err
 	}
 	if err=atomicJSON(manifest,p);err!=nil{return empty,err}
+	oldIndex:=domain.Index{}
 	indexWritten:=false
 	defer func(){
 		if err!=nil{
-			if indexWritten{_ =atomicJSON(catalogIndexPath(root),c.Index)}
+			if indexWritten{_ =atomicJSON(catalogIndexPath(root),oldIndex)}
 			_ =os.Remove(manifest)
 		}
 	}()
 	// Keep the previous index so a rejected edit cannot leave broken references.
-	oldIndex:=domain.Index{}
 	oldIndex.Schema=c.Index.Schema
 	oldIndex.CatalogVersion=c.Index.CatalogVersion
 	oldIndex.Packages=append([]string(nil),c.Index.Packages[:len(c.Index.Packages)-1]...)
