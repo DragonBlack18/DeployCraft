@@ -81,6 +81,14 @@ func BuildSFX(o BuildOptions) (BuildReport, error) {
 	var report BuildReport
 	root, err := absRoot(o.Root)
 	if err != nil {
+		return report,err
+	}
+	buildRoot:=root
+	if o.SourceRoot!="" {
+		buildRoot,err=absRoot(o.SourceRoot)
+		if err!=nil{return report,err}
+	}
+	if err != nil {
 		return report, err
 	}
 	if o.Destination == "" {
@@ -113,7 +121,7 @@ func BuildSFX(o BuildOptions) (BuildReport, error) {
 	folder := filepath.Join(staging, "kit")
 	folderReport, err := buildFolder(BuildOptions{
 		Root: root, Destination: folder, PrivateKeyPath: o.PrivateKeyPath, LabUnsigned: o.LabUnsigned,
-	}, compileWindowsEngine)
+	},func(_ string,out,key string)error{return compileWindowsEngine(buildRoot,out,key)})
 	if err != nil {
 		return report, err
 	}
@@ -124,7 +132,7 @@ func BuildSFX(o BuildOptions) (BuildReport, error) {
 	// The generated folder motor is not embedded; the SFX motor is recompiled
 	// with sfxExpected=1 and the identical catalog trust anchor.
 	outPath := filepath.Join(staging, "DeployCraft-SFX.exe")
-	if err := compileSFXEngine(root, outPath, folderReport.PublicKeyHex); err != nil {
+	if err := compileSFXEngine(buildRoot, outPath, folderReport.PublicKeyHex); err != nil {
 		return report, err
 	}
 	output, err := os.OpenFile(outPath, os.O_RDWR, 0)

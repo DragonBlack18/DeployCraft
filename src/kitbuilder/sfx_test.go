@@ -11,6 +11,8 @@ import (
 
 func TestBuildSFXCreatesIndexedWindowsExecutable(t *testing.T) {
 	root := fixtureRoot(t)
+	sourceRoot,err:=filepath.Abs(filepath.Join("..",".."))
+	if err!=nil{t.Fatal(err)}
 	addExample(t, root)
 	keys := t.TempDir()
 	private := filepath.Join(keys, "signing-private.pem")
@@ -19,7 +21,7 @@ func TestBuildSFXCreatesIndexedWindowsExecutable(t *testing.T) {
 		t.Fatal(err)
 	}
 	dest := filepath.Join(t.TempDir(), "DeployCraft-SFX.exe")
-	report, err := BuildSFX(BuildOptions{Root: root, Destination: dest, PrivateKeyPath: private})
+	report, err := BuildSFX(BuildOptions{Root: root, SourceRoot: sourceRoot, Destination: dest, PrivateKeyPath: private})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -60,7 +62,7 @@ func TestBuildSFXCreatesIndexedWindowsExecutable(t *testing.T) {
 	if !foundCatalog || !foundPayload || !foundSig {
 		t.Fatalf("SFX missing essential entries: %v", reader.Files())
 	}
-	if _, err := BuildSFX(BuildOptions{Root: root, Destination: dest, PrivateKeyPath: private}); err == nil {
+	if _, err := BuildSFX(BuildOptions{Root: root, SourceRoot: sourceRoot, Destination: dest, PrivateKeyPath: private}); err == nil {
 		t.Fatal("existing SFX was overwritten")
 	}
 }

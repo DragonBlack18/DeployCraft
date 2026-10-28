@@ -167,11 +167,12 @@ func main() {
 		f := flag.NewFlagSet("build", flag.ExitOnError)
 		root := f.String("root", ".", "raiz do repositório")
 		out := f.String("out", "", "novo destino (não deve existir)")
+		sourceRoot := f.String("source-root", "", "pasta do código-fonte Go, caso diferente do --root")
 		mode := f.String("mode", "folder", "folder ou sfx (LAB; sem Authenticode)")
 		key := f.String("private-key", "", "chave privada Ed25519 fora do Git")
 		lab := f.Bool("lab-unsigned", false, "kit de laboratório explicitamente não assinado")
 		_ = f.Parse(os.Args[2:])
-		options := kitbuilder.BuildOptions{Root: *root, Destination: *out, PrivateKeyPath: *key, LabUnsigned: *lab}
+		options := kitbuilder.BuildOptions{Root: *root, Destination: *out, PrivateKeyPath: *key, SourceRoot: *sourceRoot, LabUnsigned: *lab}
 		var report kitbuilder.BuildReport
 		var err error
 		switch *mode {
