@@ -86,31 +86,52 @@ func TestRunStartedMustHaveMetadata(t *testing.T) {
 func intPtr(x int) *int { return &x }
 
 func TestReadRunRejectsForgedResumedMetadataAndOutcomes(t *testing.T) {
-	runID,err:=NewRunID();if err!=nil{t.Fatal(err)}
-	t.Run("changed digest",func(t *testing.T){
-		store:=New(t.TempDir())
-		first:=Event{RunID:runID,Event:"run.started",KitRoot:"C:/kit",Catalog:"2026.10.1",CatalogDigest:"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",Selection:&StoredSelection{IDs:[]string{"app"}},Options:&StoredOptions{}}
-		if err:=store.Append(first);err!=nil{t.Fatal(err)}
-		conflict:=first
-		conflict.Resumed=true
-		conflict.CatalogDigest=strings.Repeat("b",64)
-		if err:=store.Append(conflict);err!=nil{t.Fatal(err)}
-		if _,err:=store.ReadRun(runID);err==nil{t.Fatal("forged catalog digest accepted")}
+	runID, err := NewRunID()
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Run("changed digest", func(t *testing.T) {
+		store := New(t.TempDir())
+		first := Event{RunID: runID, Event: "run.started", KitRoot: "C:/kit", Catalog: "2026.10.1", CatalogDigest: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", Selection: &StoredSelection{IDs: []string{"app"}}, Options: &StoredOptions{}}
+		if err := store.Append(first); err != nil {
+			t.Fatal(err)
+		}
+		conflict := first
+		conflict.Resumed = true
+		conflict.CatalogDigest = strings.Repeat("b", 64)
+		if err := store.Append(conflict); err != nil {
+			t.Fatal(err)
+		}
+		if _, err := store.ReadRun(runID); err == nil {
+			t.Fatal("forged catalog digest accepted")
+		}
 	})
-	t.Run("changed selection",func(t *testing.T){
-		store:=New(t.TempDir())
-		first:=Event{RunID:runID,Event:"run.started",KitRoot:"C:/kit",Catalog:"2026.10.1",CatalogDigest:"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",Selection:&StoredSelection{IDs:[]string{"app"}},Options:&StoredOptions{}}
-		if err:=store.Append(first);err!=nil{t.Fatal(err)}
-		second:=first
-		second.Resumed=true
-		second.Selection=&StoredSelection{IDs:[]string{"other"}}
-		if err:=store.Append(second);err!=nil{t.Fatal(err)}
-		if _,err:=store.ReadRun(runID);err==nil{t.Fatal("forged selection accepted")}
+	t.Run("changed selection", func(t *testing.T) {
+		store := New(t.TempDir())
+		first := Event{RunID: runID, Event: "run.started", KitRoot: "C:/kit", Catalog: "2026.10.1", CatalogDigest: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", Selection: &StoredSelection{IDs: []string{"app"}}, Options: &StoredOptions{}}
+		if err := store.Append(first); err != nil {
+			t.Fatal(err)
+		}
+		second := first
+		second.Resumed = true
+		second.Selection = &StoredSelection{IDs: []string{"other"}}
+		if err := store.Append(second); err != nil {
+			t.Fatal(err)
+		}
+		if _, err := store.ReadRun(runID); err == nil {
+			t.Fatal("forged selection accepted")
+		}
 	})
-	t.Run("invalid outcome",func(t *testing.T){
-		store:=New(t.TempDir())
-		if err:=store.Append(Event{RunID:runID,Event:"run.started",KitRoot:"C:/kit",Catalog:"1",CatalogDigest:"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",Selection:&StoredSelection{},Options:&StoredOptions{}});err!=nil{t.Fatal(err)}
-		if err:=store.Append(Event{RunID:runID,Event:"step.finished",Package:"app",Outcome:"installed-signed-by-attacker"});err!=nil{t.Fatal(err)}
-		if _,err:=store.ReadRun(runID);err==nil{t.Fatal("invalid outcome accepted")}
+	t.Run("invalid outcome", func(t *testing.T) {
+		store := New(t.TempDir())
+		if err := store.Append(Event{RunID: runID, Event: "run.started", KitRoot: "C:/kit", Catalog: "1", CatalogDigest: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", Selection: &StoredSelection{}, Options: &StoredOptions{}}); err != nil {
+			t.Fatal(err)
+		}
+		if err := store.Append(Event{RunID: runID, Event: "step.finished", Package: "app", Outcome: "installed-signed-by-attacker"}); err != nil {
+			t.Fatal(err)
+		}
+		if _, err := store.ReadRun(runID); err == nil {
+			t.Fatal("invalid outcome accepted")
+		}
 	})
 }

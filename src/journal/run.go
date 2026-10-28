@@ -7,8 +7,8 @@ import (
 	"io"
 	"os"
 	"path/filepath"
-	"regexp"
 	"reflect"
+	"regexp"
 )
 
 // StoredSelection/Options record what the operator approved. No secret is persisted.
