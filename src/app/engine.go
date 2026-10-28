@@ -25,6 +25,7 @@ type InstallEngine struct {
 	Registry                domain.Registry
 	Paths                   domain.Paths
 	Process                 domain.Process
+	PayloadSource           domain.PayloadSource
 	TrustedCatalogPublicKey ed25519.PublicKey
 	IsAdmin                 func() (bool, error)
 	WindowsBuild            func() (int, error)
@@ -195,7 +196,12 @@ func (e *InstallEngine) execute(ctx context.Context, store *journal.Store, runID
 		return fail("E-PRE-003", domain.ReasonExitCode, err.Error())
 	}
 	defer os.RemoveAll(runStage) // this uniquely created path is owned by this execution
-	file, err := verify.Stage(e.KitRoot, runStage, p)
+	var file string
+	if e.PayloadSource != nil {
+		file, err = verify.StageSource(e.PayloadSource, runStage, p)
+	} else {
+		file, err = verify.Stage(e.KitRoot, runStage, p)
+	}
 	if err != nil {
 		var integrity *verify.IntegrityError
 		if errors.As(err, &integrity) {
