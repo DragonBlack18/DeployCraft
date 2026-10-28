@@ -1,0 +1,32 @@
+name: DeployCraft | formatador temporario SFX
+on:
+  push:
+    branches: [feature/fase3b-packsource-sfx]
+permissions:
+  contents: write
+jobs:
+  gofmt:
+    if: github.actor == 'DragonBlack18'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: true
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+          cache: false
+      - name: Aplicar gofmt e registrar somente diferencas reais
+        shell: bash
+        run: |
+          set -euo pipefail
+          find cmd src scripts tools -name '*.go' -print0 | xargs -0 gofmt -w
+          if git diff --quiet -- '*.go'; then
+            echo "Formatacao conforme"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -u -- '*.go'
+          git commit -m "style: normaliza gofmt dos modulos SFX"
+          git push origin HEAD:feature/fase3b-packsource-sfx
