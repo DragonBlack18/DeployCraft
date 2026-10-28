@@ -19,17 +19,17 @@ import (
 )
 
 type InstallEngine struct {
-	Catalog             domain.Catalog
-	KitRoot             string
-	StateRoot           string
-	Registry            domain.Registry
-	Paths               domain.Paths
-	Process             domain.Process
+	Catalog                 domain.Catalog
+	KitRoot                 string
+	StateRoot               string
+	Registry                domain.Registry
+	Paths                   domain.Paths
+	Process                 domain.Process
 	TrustedCatalogPublicKey ed25519.PublicKey
-	IsAdmin             func() (bool, error)
-	WindowsBuild        func() (int, error)
-	postCheckTimeout    time.Duration
-	labPlatformOverride bool // used only by package-internal tests
+	IsAdmin                 func() (bool, error)
+	WindowsBuild            func() (int, error)
+	postCheckTimeout        time.Duration
+	labPlatformOverride     bool // used only by package-internal tests
 }
 type PreflightError struct {
 	Code   string

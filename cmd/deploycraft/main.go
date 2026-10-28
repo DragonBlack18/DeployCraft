@@ -31,15 +31,16 @@ var version = "0.3.0-dev"
 // An empty value only allows explicitly confirmed, unsigned LAB mode.
 var trustedCatalogPublicKeyHex string
 
-func pinnedPublicKey() (ed25519.PublicKey,error) {
-	if trustedCatalogPublicKeyHex=="" { return nil,nil }
-	key,err:=hex.DecodeString(trustedCatalogPublicKeyHex)
-	if err!=nil || len(key)!=ed25519.PublicKeySize {
-		return nil,fmt.Errorf("E-VER-004: invalid public key pinned in DeployCraft.exe")
+func pinnedPublicKey() (ed25519.PublicKey, error) {
+	if trustedCatalogPublicKeyHex == "" {
+		return nil, nil
 	}
-	return ed25519.PublicKey(key),nil
+	key, err := hex.DecodeString(trustedCatalogPublicKeyHex)
+	if err != nil || len(key) != ed25519.PublicKeySize {
+		return nil, fmt.Errorf("E-VER-004: invalid public key pinned in DeployCraft.exe")
+	}
+	return ed25519.PublicKey(key), nil
 }
-
 
 func usage() {
 	fmt.Fprintln(os.Stderr, "DeployCraft", version, "— offline Windows installer (Fase 2 LAB)")
@@ -207,8 +208,10 @@ func main() {
 	if dataRoot == "" {
 		exitErr(&app.PreflightError{Code: "E-PRE-003", Reason: "ProgramData indisponível"})
 	}
-	trustedKey,err:=pinnedPublicKey()
-	if err!=nil { exitErr(err) }
+	trustedKey, err := pinnedPublicKey()
+	if err != nil {
+		exitErr(err)
+	}
 	engine := &app.InstallEngine{
 		Catalog: c, KitRoot: absoluteKit, StateRoot: filepath.Join(dataRoot, "DeployCraft"),
 		Registry: platform.NewRegistry(), Paths: platform.NewPaths(), Process: runner.New(),

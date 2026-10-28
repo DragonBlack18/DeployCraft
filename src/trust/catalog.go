@@ -30,10 +30,10 @@ const digestDomain = "DeployCraft/catalog/tree/v1\x00"
 // CatalogSignature is intentionally small and does not contain a public key.
 // Accepting a public key supplied by the untrusted kit would defeat signing.
 type CatalogSignature struct {
-	Schema int `json:"schema"`
-	Algorithm string `json:"algorithm"`
-	KeyID string `json:"keyId"`
-	DigestSHA256 string `json:"digestSha256"`
+	Schema          int    `json:"schema"`
+	Algorithm       string `json:"algorithm"`
+	KeyID           string `json:"keyId"`
+	DigestSHA256    string `json:"digestSha256"`
 	SignatureBase64 string `json:"signatureBase64"`
 }
 
@@ -61,17 +61,25 @@ func readCatalogFile(root, rel string) ([]byte, error) {
 		return nil, fmt.Errorf("E-VER-004: caminho de catálogo inválido %q", rel)
 	}
 	abs, err := filepath.Abs(root)
-	if err != nil { return nil, err }
+	if err != nil {
+		return nil, err
+	}
 	rootReal, err := filepath.EvalSymlinks(abs)
-	if err != nil { return nil, err }
+	if err != nil {
+		return nil, err
+	}
 	file := filepath.Join(abs, filepath.FromSlash(rel))
 	info, err := os.Lstat(file)
-	if err != nil { return nil, err }
+	if err != nil {
+		return nil, err
+	}
 	if !info.Mode().IsRegular() || info.Size() > 1<<20 {
 		return nil, fmt.Errorf("E-VER-004: arquivo de catálogo inválido %q", rel)
 	}
 	real, err := filepath.EvalSymlinks(file)
-	if err != nil { return nil, err }
+	if err != nil {
+		return nil, err
+	}
 	back, err := filepath.Rel(rootReal, real)
 	if err != nil || back == ".." || strings.HasPrefix(back, ".."+string(os.PathSeparator)) {
 		return nil, fmt.Errorf("E-VER-004: catálogo fora do kit %q", rel)
@@ -84,7 +92,9 @@ func readCatalogFile(root, rel string) ([]byte, error) {
 func Digest(root string) ([sha256.Size]byte, error) {
 	var zero [sha256.Size]byte
 	c, err := catalog.Load(root)
-	if err != nil { return zero, err }
+	if err != nil {
+		return zero, err
+	}
 	files := []string{"catalog/catalog.json"}
 	for _, rel := range c.Index.Packages {
 		files = append(files, "catalog/"+rel)
@@ -94,7 +104,9 @@ func Digest(root string) ([sha256.Size]byte, error) {
 	h.Write([]byte(digestDomain))
 	for _, rel := range files {
 		content, err := readCatalogFile(root, rel)
-		if err != nil { return zero, err }
+		if err != nil {
+			return zero, err
+		}
 		writeEntry(h, rel, content)
 	}
 	copy(zero[:], h.Sum(nil))
@@ -107,16 +119,20 @@ func Sign(root string, priv ed25519.PrivateKey) ([]byte, error) {
 		return nil, errors.New("E-VER-004: chave privada Ed25519 inválida")
 	}
 	d, err := Digest(root)
-	if err != nil { return nil, err }
+	if err != nil {
+		return nil, err
+	}
 	manifest := CatalogSignature{
-		Schema: 1,
-		Algorithm: "Ed25519",
-		KeyID: KeyID(priv.Public().(ed25519.PublicKey)),
-		DigestSHA256: hex.EncodeToString(d[:]),
+		Schema:          1,
+		Algorithm:       "Ed25519",
+		KeyID:           KeyID(priv.Public().(ed25519.PublicKey)),
+		DigestSHA256:    hex.EncodeToString(d[:]),
 		SignatureBase64: base64.StdEncoding.EncodeToString(ed25519.Sign(priv, signMessage(d))),
 	}
 	encoded, err := json.MarshalIndent(manifest, "", "  ")
-	if err != nil { return nil, err }
+	if err != nil {
+		return nil, err
+	}
 	return append(encoded, '\n'), nil
 }
 
@@ -127,16 +143,22 @@ func Verify(root string, pub ed25519.PublicKey) error {
 	}
 	file := filepath.Join(root, "catalog", "catalog.sig")
 	info, err := os.Lstat(file)
-	if err != nil { return fmt.Errorf("E-VER-004: catalog.sig ausente: %w", err) }
+	if err != nil {
+		return fmt.Errorf("E-VER-004: catalog.sig ausente: %w", err)
+	}
 	if !info.Mode().IsRegular() || info.Size() > 4096 {
 		return errors.New("E-VER-004: catalog.sig inválido")
 	}
 	raw, err := os.ReadFile(file)
-	if err != nil { return fmt.Errorf("E-VER-004: leitura de catalog.sig: %w", err) }
+	if err != nil {
+		return fmt.Errorf("E-VER-004: leitura de catalog.sig: %w", err)
+	}
 	var sig CatalogSignature
 	dec := json.NewDecoder(bytes.NewReader(raw))
 	dec.DisallowUnknownFields()
-	if err := dec.Decode(&sig); err != nil { return fmt.Errorf("E-VER-004: JSON de assinatura: %w", err) }
+	if err := dec.Decode(&sig); err != nil {
+		return fmt.Errorf("E-VER-004: JSON de assinatura: %w", err)
+	}
 	var tail any
 	if err := dec.Decode(&tail); err != io.EOF {
 		return errors.New("E-VER-004: dados extras em catalog.sig")
@@ -145,7 +167,9 @@ func Verify(root string, pub ed25519.PublicKey) error {
 		return errors.New("E-VER-004: versão, algoritmo ou editor da assinatura inválido")
 	}
 	d, err := Digest(root)
-	if err != nil { return fmt.Errorf("E-VER-004: catálogo não verificável: %w", err) }
+	if err != nil {
+		return fmt.Errorf("E-VER-004: catálogo não verificável: %w", err)
+	}
 	if sig.DigestSHA256 != hex.EncodeToString(d[:]) {
 		return errors.New("E-VER-004: catálogo alterado após assinatura")
 	}
