@@ -63,14 +63,14 @@ func TestWindowsNativeProcessE2E(t *testing.T) {
 	}
 	newEngine := func(p domain.Package) *InstallEngine {
 		return &InstallEngine{
-			Catalog:      domain.Catalog{Packages: map[string]domain.Package{p.ID: p}},
-			KitRoot:      kit,
-			StateRoot:    t.TempDir(),
-			Registry:     platform.NewRegistry(),
-			Paths:        platform.NewPaths(),
-			Process:      runner.New(),
-			IsAdmin:      func() (bool, error) { return true, nil },
-			WindowsBuild: platform.WindowsBuild,
+			Catalog:          domain.Catalog{Packages: map[string]domain.Package{p.ID: p}},
+			KitRoot:          kit,
+			StateRoot:        t.TempDir(),
+			Registry:         platform.NewRegistry(),
+			Paths:            platform.NewPaths(),
+			Process:          runner.New(),
+			IsAdmin:          func() (bool, error) { return true, nil },
+			WindowsBuild:     platform.WindowsBuild,
 			postCheckTimeout: 200 * time.Millisecond,
 		}
 	}
