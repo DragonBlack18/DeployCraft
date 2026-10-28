@@ -81,15 +81,14 @@ func BuildSFX(o BuildOptions) (BuildReport, error) {
 	var report BuildReport
 	root, err := absRoot(o.Root)
 	if err != nil {
-		return report,err
-	}
-	buildRoot:=root
-	if o.SourceRoot!="" {
-		buildRoot,err=absRoot(o.SourceRoot)
-		if err!=nil{return report,err}
-	}
-	if err != nil {
 		return report, err
+	}
+	buildRoot := root
+	if o.SourceRoot != "" {
+		buildRoot, err = absRoot(o.SourceRoot)
+		if err != nil {
+			return report, err
+		}
 	}
 	if o.Destination == "" {
 		return report, fmt.Errorf("E-BLD-002: --out obrigatório")
