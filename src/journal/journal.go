@@ -15,18 +15,23 @@ import (
 )
 
 type Event struct {
-	Timestamp  time.Time `json:"ts"`
-	RunID      string    `json:"runId"`
-	Event      string    `json:"event"`
-	Package    string    `json:"package,omitempty"`
-	Version    string    `json:"version,omitempty"`
-	Action     string    `json:"action,omitempty"`
-	Outcome    string    `json:"outcome,omitempty"`
-	Reason     string    `json:"reason,omitempty"`
-	Code       string    `json:"code,omitempty"`
-	DurationMs int64     `json:"durationMs,omitempty"`
-	ExitCode   *int      `json:"exitCode,omitempty"`
-	Detail     string    `json:"detail,omitempty"`
+	Timestamp  time.Time        `json:"ts"`
+	RunID      string           `json:"runId"`
+	Event      string           `json:"event"`
+	Package    string           `json:"package,omitempty"`
+	Version    string           `json:"version,omitempty"`
+	Action     string           `json:"action,omitempty"`
+	Outcome    string           `json:"outcome,omitempty"`
+	Reason     string           `json:"reason,omitempty"`
+	Code       string           `json:"code,omitempty"`
+	DurationMs int64            `json:"durationMs,omitempty"`
+	ExitCode   *int             `json:"exitCode,omitempty"`
+	Detail     string           `json:"detail,omitempty"`
+	KitRoot    string           `json:"kit,omitempty"`
+	Catalog    string           `json:"catalog,omitempty"`
+	Selection  *StoredSelection `json:"selection,omitempty"`
+	Options    *StoredOptions   `json:"options,omitempty"`
+	Resumed    bool             `json:"resumed,omitempty"`
 }
 type Store struct {
 	Root string

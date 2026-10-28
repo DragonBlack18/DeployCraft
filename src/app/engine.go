@@ -54,7 +54,7 @@ func (e *InstallEngine) Status(id string) (domain.Detection, error) {
 	}
 	return detect.NewScan(e.Registry, e.Paths).Detect(p), nil
 }
-func (e *InstallEngine) preflight(p domain.Package, opt InstallOptions) error {
+func (e *InstallEngine) preflight(p domain.Package, opt InstallOptions, plannerApproved bool) error {
 	if runtime.GOOS != "windows" && !e.labPlatformOverride {
 		return &PreflightError{Code: "E-PRE-002", Reason: "instalação real disponível apenas em Windows"}
 	}
@@ -89,7 +89,7 @@ func (e *InstallEngine) preflight(p domain.Package, opt InstallOptions) error {
 			return &PreflightError{Code: "E-PRE-002", Reason: fmt.Sprintf("build %d menor que %d", build, p.Platform.MinBuild)}
 		}
 	}
-	if len(p.DependsOn) > 0 || len(p.ConflictsWith) > 0 {
+	if !plannerApproved && (len(p.DependsOn) > 0 || len(p.ConflictsWith) > 0) {
 		return &PreflightError{Code: "E-PLN-002", Reason: "dependências/conflitos exigem planner (Fase 2)"}
 	}
 	if p.Install.Driver != "exe" && p.Install.Driver != "msi" {
@@ -107,7 +107,7 @@ func (e *InstallEngine) InstallOne(ctx context.Context, id string, opt InstallOp
 	if !ok {
 		return report, &PreflightError{Code: "E-PLN-001", Reason: "pacote não encontrado: " + id}
 	}
-	if err := e.preflight(p, opt); err != nil {
+	if err := e.preflight(p, opt, false); err != nil {
 		return report, err
 	}
 	if e.Registry == nil || e.Paths == nil || e.Process == nil {

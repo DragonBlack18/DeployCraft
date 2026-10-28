@@ -1,5 +1,14 @@
 # Changelog
 
+## Não liberado — Fase 2 (Planejamento LAB) — 2026-10-28
+- Planner puro: perfis herdados, dependências transitivas, Kahn determinístico, conflito em ambos os sentidos, estados instalados/desatualizados/desconhecidos e barreiras de reboot.
+- CLI `plan`, `install --dry-run`, `install --profile`, IDs múltiplos e `resume <runId>`.
+- Batch verifica hash de todos os pacotes necessários antes de executar o primeiro, continua independentes após falha e bloqueia os dependentes.
+- Journal contém seleção original, opções, catálogo e caminho do kit; retomar replaneja e respeita idempotência.
+- Testes golden, DAG aleatório, conflitos, falha por dependência, hash e retomada.
+- Retomada **manual** até haver RunOnce homologado após reinicialização de VM e assinatura de catálogo.
+
+
 ## Não liberado — Fase 1 / LAB (2026-10-28)
 
 - Detector real Windows com registro HKLM (64/32), HKCU e regras de arquivo.
