@@ -12,7 +12,7 @@ O rodapé contém o magic `DCPACK01`, offset e tamanho do índice e hash SHA-256
 Se o executável já tiver Authenticode, o leitor considera a tabela PE Security para procurar o rodapé antes do certificado, descontando até sete bytes de alinhamento. **Essa compatibilidade ainda precisa de teste com um certificado real.** O processo de assinatura Authenticode ainda não foi implementado.
 
 ## Criação do arquivo único
-O kit-builder continua utilizando somente o acervo local. O resultado gerado fica em `dist/` (fora do Git), nunca é sobrescrito e não inclui a chave privada.
+O kit-builder continua utilizando somente o acervo local. O resultado gerado fica em `dist/` (fora do Git), nunca é sobrescrito e não inclui a chave privada. Se o catálogo estiver numa pasta separada do código Go, informe também `--source-root <caminho-do-repositório>` para compilar o motor sem procurar `go.mod` na pasta de payloads.
 
 ```powershell
 # Laboratório: manifesto sem assinatura (somente testes isolados)
