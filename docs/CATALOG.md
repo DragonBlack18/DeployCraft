@@ -28,3 +28,9 @@ Os perfis iniciais estão vazios. **Não há binários reais, licenças embutida
 
 ## Formato
 `schema/catalog.schema.json` e `schema/package.schema.json` definem o formato v1. O loader Go aplica validações de estrutura, referências e grafos. O comando `verify` verifica arquivos físicos de maneira independente.
+
+
+## Fase 3A — inclusão e atualização no kit-builder
+`kit-builder add` exige caminho para um MSI/EXE offline já obtido legalmente, ID, nome, versão, driver e detecção real. EXE exige switches informados pelo operador; não há tentativa de adivinhar instalação silenciosa. O comando calcula SHA-256 na cópia e adiciona ao índice e a perfis existentes. `update` preserva os arquivos antigos, sem sobrescrever o payload anterior; o kit de distribuição inclui apenas o referenciado pelo manifesto atual.
+
+`kit-builder build --mode folder` monta somente arquivos em uso, recalcula sua integridade e pode assinar o catálogo com Ed25519. O binário é compilado com a chave pública fixa. O modo `sfx` **ainda não está implementado** e retorna erro explícito. Consulte `docs/FASE3-LAB.md`.
