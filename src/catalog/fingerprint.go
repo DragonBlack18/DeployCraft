@@ -45,7 +45,7 @@ func Fingerprint(c domain.Catalog) (string, error) {
 		}
 		payload.Profiles = append(payload.Profiles, profile)
 	}
-		raw, err := json.Marshal(payload)
+	raw, err := json.Marshal(payload)
 	if err != nil {
 		return "", fmt.Errorf("E-CAT-003: catálogo não serializável: %w", err)
 	}
