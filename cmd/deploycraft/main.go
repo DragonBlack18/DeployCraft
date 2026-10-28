@@ -234,7 +234,7 @@ func main() {
 		Registry: platform.NewRegistry(), Paths: platform.NewPaths(), Process: runner.New(),
 		IsAdmin: platform.IsAdministrator, WindowsBuild: platform.WindowsBuild,
 		TrustedCatalogPublicKey: trustedKey,
-		PayloadSource: payloadSource,
+		PayloadSource:           payloadSource,
 	}
 	selection := planner.Selection{Profile: *profile, IDs: flags.Args()}
 	planOptions := planner.Options{Force: *force, UpgradeOutdated: true}
