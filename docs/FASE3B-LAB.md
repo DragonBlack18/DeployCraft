@@ -9,7 +9,7 @@ A estrutura segue a seção 11.4 da documentação técnica original, sem ZIP ne
 
 O rodapé contém o magic `DCPACK01`, offset e tamanho do índice e hash SHA-256 do índice. Cada entrada possui caminho relativo, offset, tamanho e SHA-256. O leitor recusa duplicatas, percursos perigosos, índices adulterados, sobreposição de offsets e dados fora do limite. A leitura por `PackSource.Open` retorna somente a faixa de bytes solicitada.
 
-Se o executável já tiver Authenticode, o leitor considera a tabela PE Security para procurar o rodapé antes do certificado, descontando até sete bytes de alinhamento. **Essa compatibilidade ainda precisa de teste com um certificado real.** O processo de assinatura Authenticode ainda não foi implementado.
+Se o executável já tiver Authenticode, o leitor considera a tabela PE Security para procurar o rodapé antes do certificado, descontando até sete bytes de alinhamento. **Essa compatibilidade ainda precisa de teste com um certificado real.** A integração com SignTool está disponível para desenvolvimento na Fase 3C. A assinatura e a homologação com um certificado corporativo ainda não foram realizadas.
 
 ## Criação do arquivo único
 O kit-builder continua utilizando somente o acervo local. O resultado gerado fica em `dist/` (fora do Git), nunca é sobrescrito e não inclui a chave privada. Se o catálogo estiver numa pasta separada do código Go, informe também `--source-root <caminho-do-repositório>` para compilar o motor sem procurar `go.mod` na pasta de payloads.

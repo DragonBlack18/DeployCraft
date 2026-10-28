@@ -1,5 +1,17 @@
 # Changelog
 
+## Não liberado — Fase 3C Authenticode LAB (2026-10-28)
+
+- Scripts de assinatura pós-SFX e verificação de Authenticode em PowerShell 5.1.
+- Origem imutável, destino novo, certificado Code Signing existente no Windows,
+  timestamp RFC3161 obrigatório fora do CI e editor conferido.
+- `kit-builder inspect-sfx` valida offsets, índice e hashes sem executar payloads.
+- CI Windows usa certificado temporário autoassinado para testar SFX pós-assinatura
+  e rejeição de adulteração. Nenhum segredo corporativo ou certificado fica no Git.
+- A assinatura de editor corporativa, assinatura com TSA real e testes de VM
+  continuam pendentes. Não há release operacional.
+
+
 ## Não liberado — Fase 3B (SFX em laboratório) — 2026-10-28
 
 - `kit-builder build --mode sfx` gera EXE Windows único com arquivos não comprimidos, índice JSON e rodapé com digest SHA-256. Não sobrescreve versões existentes.
