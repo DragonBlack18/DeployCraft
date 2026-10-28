@@ -42,8 +42,8 @@ func (e *InstallEngine) RunBatch(ctx context.Context, sel planner.Selection, opt
 	if !opt.Confirmed {
 		return report, &PreflightError{Code: "E-PLN-003", Reason: "--yes obrigatório em execução LAB"}
 	}
-	if !opt.LabUnsignedCatalog {
-		return report, &PreflightError{Code: "E-VER-004", Reason: "kit sem catálogo assinado: somente VM LAB com --lab-unsigned-catalog"}
+	if err := e.ensureTrustedCatalog(opt.LabUnsignedCatalog); err != nil {
+		return report, err
 	}
 	if e.Process == nil || e.Registry == nil || e.Paths == nil {
 		return report, &PreflightError{Code: "E-PRE-002", Reason: "adaptadores incompletos"}

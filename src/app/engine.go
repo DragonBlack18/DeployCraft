@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"crypto/ed25519"
 	"errors"
 	"fmt"
 	"os"
@@ -24,6 +25,7 @@ type InstallEngine struct {
 	Registry            domain.Registry
 	Paths               domain.Paths
 	Process             domain.Process
+	TrustedCatalogPublicKey ed25519.PublicKey
 	IsAdmin             func() (bool, error)
 	WindowsBuild        func() (int, error)
 	postCheckTimeout    time.Duration
@@ -57,9 +59,6 @@ func (e *InstallEngine) Status(id string) (domain.Detection, error) {
 func (e *InstallEngine) preflight(p domain.Package, opt InstallOptions, plannerApproved bool) error {
 	if runtime.GOOS != "windows" && !e.labPlatformOverride {
 		return &PreflightError{Code: "E-PRE-002", Reason: "instalação real disponível apenas em Windows"}
-	}
-	if !opt.LabUnsignedCatalog {
-		return &PreflightError{Code: "E-VER-004", Reason: "catálogo ainda não assinado; execução permitida apenas em VM de laboratório com --lab-unsigned-catalog"}
 	}
 	if !opt.Confirmed && !opt.DryRun {
 		return &PreflightError{Code: "E-PLN-003", Reason: "confirmação explícita --yes necessária"}
@@ -106,6 +105,9 @@ func (e *InstallEngine) InstallOne(ctx context.Context, id string, opt InstallOp
 	p, ok := e.Catalog.Packages[id]
 	if !ok {
 		return report, &PreflightError{Code: "E-PLN-001", Reason: "pacote não encontrado: " + id}
+	}
+	if err := e.ensureTrustedCatalog(opt.LabUnsignedCatalog); err != nil {
+		return report, err
 	}
 	if err := e.preflight(p, opt, false); err != nil {
 		return report, err
