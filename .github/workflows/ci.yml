@@ -1,0 +1,76 @@
+name: DeployCraft | quality and environments
+
+on:
+  push:
+    branches: [develop, main]
+  pull_request:
+    branches: [develop, main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploycraft-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: quality-${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    steps:
+      - name: Checkout (read-only)
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Setup Go
+        uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+          cache: false
+      - name: Quality gate
+        run: go run ./scripts/check
+
+  bundle:
+    name: unsigned-foundation-${{ github.ref_name }}
+    needs: [quality]
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    runs-on: windows-latest
+    environment:
+      name: ${{ github.ref_name == 'main' && 'production' || 'development' }}
+    steps:
+      - name: Checkout (read-only)
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Setup Go
+        uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+          cache: false
+      - name: Build Windows x64 CLIs (NOT an installable release)
+        shell: pwsh
+        run: |
+          New-Item -Path dist -ItemType Directory -Force | Out-Null
+          go build -trimpath -ldflags '-s -w' -o dist/DeployCraft.exe ./cmd/deploycraft
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          go build -trimpath -ldflags '-s -w' -o dist/kit-builder.exe ./cmd/kit-builder
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          Get-ChildItem dist -Filter '*.exe' | ForEach-Object {
+            $hash = (Get-FileHash -Algorithm SHA256 -Path $_.FullName).Hash.ToLowerInvariant()
+            "$hash  $($_.Name)"
+          } | Set-Content -Path dist/SHA256SUMS.txt -Encoding utf8
+      - name: Publish unsigned foundation artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: DeployCraft-foundation-${{ github.ref_name }}-${{ github.sha }}
+          path: dist/*
+          if-no-files-found: error
+          retention-days: 14
+
+# Never execute third-party installers in a GitHub Actions runner.
+# Configure review and branch restrictions in Settings > Environments.
