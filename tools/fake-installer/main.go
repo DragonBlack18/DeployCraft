@@ -21,15 +21,24 @@ func main() {
 	flag.Parse()
 	if *attemptFile != "" {
 		count := 0
-		if bytes,err := os.ReadFile(*attemptFile);err==nil{
-			count,err=strconv.Atoi(strings.TrimSpace(string(bytes)))
-			if err!=nil { fmt.Fprintln(os.Stderr,err);os.Exit(2) }
-		}else if !os.IsNotExist(err){fmt.Fprintln(os.Stderr,err);os.Exit(2)}
-		count++
-		if err:=os.WriteFile(*attemptFile,[]byte(strconv.Itoa(count)),0600);err!=nil{
-			fmt.Fprintln(os.Stderr,err);os.Exit(2)
+		if bytes, err := os.ReadFile(*attemptFile); err == nil {
+			count, err = strconv.Atoi(strings.TrimSpace(string(bytes)))
+			if err != nil {
+				fmt.Fprintln(os.Stderr, err)
+				os.Exit(2)
+			}
+		} else if !os.IsNotExist(err) {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(2)
 		}
-		if count<=*retryUntil{os.Exit(*retryCode)}
+		count++
+		if err := os.WriteFile(*attemptFile, []byte(strconv.Itoa(count)), 0600); err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(2)
+		}
+		if count <= *retryUntil {
+			os.Exit(*retryCode)
+		}
 	}
 	if *sleep > 0 {
 		time.Sleep(*sleep)
