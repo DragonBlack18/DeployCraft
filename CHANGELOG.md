@@ -1,5 +1,18 @@
 # Changelog
 
+## Não liberado — Fase 1 / LAB (2026-10-28)
+
+- Detector real Windows com registro HKLM (64/32), HKCU e regras de arquivo.
+- Driver MSI/EXE com argumentos sem shell e mascaramento de segredos no log.
+- Staging local: cópia verificada por SHA-256 e tamanho, recusa de symlinks externos.
+- Runner com timeout, captura limitada de saída e código de término.
+- Registro JSON Lines persistente, snapshot atômico e relatório de execução.
+- CLI status/install com bloqueio explícito de catálogo não assinado e exigência de --yes.
+- Testes em Windows e Linux com adaptadores falsos e APIs reais de leitura do Windows.
+- Instalações reais de softwares de terceiros ainda precisam de VM homologada.
+- Detecção de estado desconhecido bloqueia execução; exit code 0 sozinho não prova sucesso.
+
+
 ## Não liberado — Fase 0 (2026-10-28)
 
 - DeployCraft adotado como nome definitivo.

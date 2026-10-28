@@ -1,30 +1,40 @@
 # DeployCraft
 
-**DeployCraft** é um projeto de instalador universal de software para Windows 10/11 x64, orientado à execução **offline**, com um motor leve e um catálogo extensível.
+**DeployCraft** é o motor universal de implantação de software **offline** para Windows 10/11 x64, com catálogo JSON extensível. O código é Go; os instaladores de terceiros ficam fora do Git e do executável.
 
-> Estado do projeto: **Fase 0 — Fundamentos**. Ainda não é um instalador pronto para uso operacional.
+## Estado atual
+- **Fase 0 (Fundamentos):** concluída com GitHub Actions em Windows e Linux.
+- **Fase 1 (MVP):** em validação de laboratório, *não homologada para produção*. Há detecção real Windows, drivers MSI/EXE, staging SHA-256, runner e journal.
+- **Pendências obrigatórias:** validação E2E em máquina virtual limpa com instaladores reais, assinatura de catálogo, proteção do staging/controle de árvore, planejamento de dependências, retomada após reinício e interface desktop.
 
-## Princípios inegociáveis
-- **Motor, catálogo e payloads separados.** Nenhum instalador de terceiros será incorporado ao executável ou versionado no Git.
-- **Offline no destino.** Os instaladores devem existir no kit local e ter origem e integridade verificáveis.
-- **Plano antes da ação.** Nenhuma instalação sem pré-checagens, detecção e confirmação.
-- **Idempotência.** Verificar antes e depois da instalação, sem confiar exclusivamente no exit code.
-- **Falha segura e auditável.** Eventos, relatórios, integridade SHA-256 e testes de regressão.
-- **GUI desacoplada.** Personalização visual e motion design não alteram o núcleo.
+## Dois ambientes
+| Ambiente | Branch | Política |
+|---|---|---|
+| Desenvolvimento | `develop` | Implementação e PR com testes automáticos |
+| Produção | `main` | Somente funcionalidades verificadas e promovidas por PR |
 
-## Ambientes Git
-| Ambiente | Branch | Regra |
-| --- | --- | --- |
-| Desenvolvimento | `develop` | Implementação e integração, com validação no GitHub Actions |
-| Produção | `main` | Somente mudanças aprovadas e verificadas por PR |
+Workflow: `.github/workflows/ci.yml` valida formatação, vet, build Windows, testes, catálogo e tamanho em Windows e Linux. Os artefatos ainda são **não assinados**; não executar em produção.
 
-Os builds no GitHub Actions geram artefatos de desenvolvimento ou produção conforme a branch, **sem executar instaladores reais no runner**. O workflow usa os GitHub Environments `development` e `production`. As políticas de revisão/proteção desses environments exigem configuração administrativa adicional no GitHub.
+## Comandos de desenvolvimento
+```powershell
+git clone https://github.com/DragonBlack18/DeployCraft.git
+cd DeployCraft
+git switch develop
+go run ./scripts/check
+go run ./cmd/kit-builder lint --root .
+go run ./cmd/kit-builder verify --root .
+go run ./cmd/deploycraft list --kit .
+```
 
-## Fonte técnica
-A arquitetura segue **Instalador Offline de Software — Documentação Técnica** (106 páginas, outubro de 2026): Go, catálogo JSON versionado, verificação SHA-256, `journal`, `kit-builder`, fases 0–5 e portões de qualidade.
+## Teste de instalação em Windows VM somente
+```powershell
+go run ./cmd/deploycraft status --kit .
+go run ./cmd/deploycraft install --kit . --lab-unsigned-catalog --dry-run <id>
+go run ./cmd/deploycraft install --kit . --lab-unsigned-catalog --yes <id>
+```
 
-## Limites atuais
-O repositório começa sem binários nem uma coleção pré-carregada de instaladores. O catálogo será preenchido com payloads reais, legais, verificados e testados por pacote. **Não confundir manifesto de exemplo com software instalável.**
+**Aviso:** requer PowerShell elevado, payload autêntico local, manifesto completo e `<id>` cadastrado. Os perfis começam vazios e o projeto não inclui nenhum instalador real. A exceção `--lab-unsigned-catalog` serve apenas a teste descartável, nunca a máquinas corporativas.
 
-## Autoria
-**Davi Brand — Software Developer**
+Documentação técnica complementar: `docs/ARCHITECTURE.md`, `docs/ENVIRONMENTS.md`, `docs/CATALOG.md`, `docs/ROADMAP.md` e `docs/FASE1-LAB.md`.
+
+Autoria: **Davi Brand — Software Developer**.
