@@ -11,6 +11,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
+          ref: feature/fase4a-retry-transitorio
           persist-credentials: true
       - uses: actions/setup-go@v7
         with:
@@ -20,7 +21,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          gofmt -w src/app/engine.go src/app/retry.go src/app/retry_test.go
+          gofmt -w src/app/engine.go src/app/retry.go src/app/retry_test.go src/app/retry_windows_test.go tools/fake-installer/main.go
           if git diff --quiet -- '*.go'; then exit 0; fi
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
