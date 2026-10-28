@@ -1,0 +1,33 @@
+# One-time bootstrap formatter. This workflow is removed after its first successful run.
+name: DeployCraft | bootstrap gofmt
+on:
+  push:
+    branches: [develop]
+permissions:
+  contents: write
+jobs:
+  format:
+    if: github.actor == 'DragonBlack18'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: true
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+          cache: false
+      - name: Format all Go code and commit only actual formatting changes
+        shell: bash
+        run: |
+          set -euo pipefail
+          find cmd src scripts -name '*.go' -print0 | xargs -0 gofmt -w
+          if git diff --quiet -- '*.go'; then
+            echo "No formatting changes"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -u -- '*.go'
+          git commit -m "style: aplica gofmt ao núcleo do DeployCraft"
+          git push origin HEAD:develop
