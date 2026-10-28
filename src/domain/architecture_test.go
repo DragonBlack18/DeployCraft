@@ -17,16 +17,26 @@ func TestDomainImportsRemainPure(t *testing.T) {
 		"fmt": true, "math/big": true, "regexp": true, "strings": true,
 	}
 	entries, err := os.ReadDir(".")
-	if err != nil { t.Fatal(err) }
+	if err != nil {
+		t.Fatal(err)
+	}
 	for _, ent := range entries {
 		if ent.IsDir() || !strings.HasSuffix(ent.Name(), ".go") ||
-			strings.HasSuffix(ent.Name(), "_test.go") { continue }
+			strings.HasSuffix(ent.Name(), "_test.go") {
+			continue
+		}
 		f, err := parser.ParseFile(token.NewFileSet(), filepath.Join(".", ent.Name()), nil, parser.ImportsOnly)
-		if err != nil { t.Fatal(err) }
+		if err != nil {
+			t.Fatal(err)
+		}
 		for _, imp := range f.Imports {
 			name, err := strconv.Unquote(imp.Path.Value)
-			if err != nil { t.Fatal(err) }
-			if !allowed[name] { t.Fatalf("%s imports forbidden package %q", ent.Name(), name) }
+			if err != nil {
+				t.Fatal(err)
+			}
+			if !allowed[name] {
+				t.Fatalf("%s imports forbidden package %q", ent.Name(), name)
+			}
 		}
 	}
 }

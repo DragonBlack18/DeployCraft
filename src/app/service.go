@@ -41,6 +41,7 @@ const (
 	EventRebootNeeded EventKind = "ReinicioNecessario"
 	EventRunDone      EventKind = "ExecucaoConcluida"
 )
+
 type Event struct {
 	Kind      EventKind
 	RunID     string

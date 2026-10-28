@@ -56,9 +56,11 @@ type Paths interface {
 	Expand(text string) string
 }
 
-type Elevation interface { IsAdmin() (bool, error) }
-type Disk interface { FreeBytes(path string) (uint64, error) }
-type Reboot interface { Pending() (bool, error) }
+type Elevation interface{ IsAdmin() (bool, error) }
+type Disk interface {
+	FreeBytes(path string) (uint64, error)
+}
+type Reboot interface{ Pending() (bool, error) }
 
 // Implementations must enforce allowed paths and atomic-write semantics.
 type FileSystem interface {
@@ -73,5 +75,9 @@ type Running interface {
 	Wait(ctx context.Context) (exitCode int, err error)
 	Kill() error
 }
-type Process interface { Start(command Command) (Running, error) }
-type PayloadSource interface { Open(relPath string) (io.ReadCloser, error) }
+type Process interface {
+	Start(command Command) (Running, error)
+}
+type PayloadSource interface {
+	Open(relPath string) (io.ReadCloser, error)
+}
