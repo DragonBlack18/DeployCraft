@@ -1,5 +1,19 @@
 # Changelog
 
+## Não liberado — Endurecimento de retomada (2026-10-28)
+
+- Toda execução registra SHA-256 canônico do conteúdo lógico do catálogo no journal.
+- `resume` recusa catálogo alterado mesmo com o mesmo `catalogVersion`.
+- `journal.ReadRun` recusa `run.started` malformado ou com metadados divergentes,
+  resultado de pacote com estado inválido e eventos após conclusão terminal.
+- Testes de ordem de mapas, adulteração de regras de instalação, replay de seleção
+  e política de não executar um processo após mismatch.
+
+**Nota:** esse fingerprint não é assinatura digital; a confiança de origem continua
+dependendo de Ed25519 e, futuramente, Authenticode. Ainda não comprova reinício
+físico em VM.
+
+
 ## Não liberado — Fase 3B (SFX em laboratório) — 2026-10-28
 
 - `kit-builder build --mode sfx` gera EXE Windows único com arquivos não comprimidos, índice JSON e rodapé com digest SHA-256. Não sobrescreve versões existentes.
