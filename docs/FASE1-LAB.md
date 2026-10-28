@@ -15,7 +15,8 @@
 - A detecção por `command`, `appx` e `file.minVersion` retorna `desconhecido`, bloqueando a instalação em vez de supor ausência.
 - Timeouts ainda encerram o processo inicial, não a árvore inteira. Job Objects chegam na Fase 4.
 - Reinício é reportado, mas retomada automática entra na Fase 2.
-- Testes automatizados usam instaladores falsos; o aceite de **instaladores reais em VM limpa** permanece necessário antes da homologação.
+- O GitHub Actions executa testes de unidade com adaptadores falsos e, no runner Windows, um **executável de teste real** compilado a partir de `tools/fake-installer`. O teste cobre execução, idempotência, código de saída, timeout e recusa de falso sucesso. **Não instala software de terceiros.**
+- O aceite de **instaladores reais em VM limpa** permanece necessário antes da homologação.
 
 ## Kit local esperado
 ```text
