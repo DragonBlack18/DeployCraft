@@ -20,7 +20,10 @@ type Reader struct {
 	f *os.File
 	entries map[string]Entry
 	ordered []Entry
+	digest [32]byte
 }
+// DigestHex is a stable cache key for one immutable SFX index.
+func (r *Reader)DigestHex() string { return hex.EncodeToString(r.digest[:]) }
 func (r *Reader)Close()error{return r.f.Close()}
 func (r *Reader)Files()[]Entry{return append([]Entry(nil),r.ordered...)}
 // Open implements domain.PayloadSource without pre-extracting installers.
@@ -148,5 +151,5 @@ func openReader(f *os.File)(*Reader,error){
 		previous=entry.Offset+entry.Size
 		entries[entry.Path]=entry
 	}
-	return &Reader{f:f,entries:entries,ordered:ordered},nil
+	return &Reader{f:f,entries:entries,ordered:ordered,digest:expected},nil
 }
