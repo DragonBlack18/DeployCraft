@@ -11,8 +11,10 @@ import (
 
 func TestBuildSFXCreatesIndexedWindowsExecutable(t *testing.T) {
 	root := fixtureRoot(t)
-	sourceRoot,err:=filepath.Abs(filepath.Join("..",".."))
-	if err!=nil{t.Fatal(err)}
+	sourceRoot, err := filepath.Abs(filepath.Join("..", ".."))
+	if err != nil {
+		t.Fatal(err)
+	}
 	addExample(t, root)
 	keys := t.TempDir()
 	private := filepath.Join(keys, "signing-private.pem")

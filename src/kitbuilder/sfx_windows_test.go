@@ -13,8 +13,10 @@ import (
 // installers (the payload in this test is intentionally nonexecutable).
 func TestWindowsSFXListDoesNotExtractPayloads(t *testing.T) {
 	root := fixtureRoot(t)
-	sourceRoot,err:=filepath.Abs(filepath.Join("..",".."))
-	if err!=nil{t.Fatal(err)}
+	sourceRoot, err := filepath.Abs(filepath.Join("..", ".."))
+	if err != nil {
+		t.Fatal(err)
+	}
 	addExample(t, root)
 	keys := t.TempDir()
 	private := filepath.Join(keys, "private.pem")

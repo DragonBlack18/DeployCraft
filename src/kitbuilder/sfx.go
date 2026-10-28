@@ -120,7 +120,7 @@ func BuildSFX(o BuildOptions) (BuildReport, error) {
 	folder := filepath.Join(staging, "kit")
 	folderReport, err := buildFolder(BuildOptions{
 		Root: root, Destination: folder, PrivateKeyPath: o.PrivateKeyPath, LabUnsigned: o.LabUnsigned,
-	},func(_ string,out,key string)error{return compileWindowsEngine(buildRoot,out,key)})
+	}, func(_ string, out, key string) error { return compileWindowsEngine(buildRoot, out, key) })
 	if err != nil {
 		return report, err
 	}
