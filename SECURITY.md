@@ -15,3 +15,12 @@ O instalador final terá privilégios elevados; por isso, o padrão é falhar an
 Esta fase valida catálogos e integridade, mas **não é um instalador homologado**.
 
 Relate vulnerabilidades sensíveis ao mantenedor por canal privado, sem publicar segredos ou binários internos em issues.
+
+
+## Estágio de assinatura (Fase 3C)
+- Certificado Code Signing instalado no Windows: scripts/sign/Sign-DeployCraft.ps1.
+- O script assina uma cópia nova e exige timestamp RFC3161 fora dos testes de CI.
+- Validação com SignTool /pa e Get-AuthenticodeSignature, seguida da leitura
+  independente do SFX. Não confunda integridade de índice com identidade do editor.
+- Chaves Ed25519, certificados de editor e códigos de instalação são domínios
+  separados. O certificado de CI é autoassinado e não deve ser distribuído.

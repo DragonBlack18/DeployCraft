@@ -12,6 +12,7 @@ import (
 	"github.com/DragonBlack18/DeployCraft/src/catalog"
 	"github.com/DragonBlack18/DeployCraft/src/domain"
 	"github.com/DragonBlack18/DeployCraft/src/kitbuilder"
+	"github.com/DragonBlack18/DeployCraft/src/pack"
 	"github.com/DragonBlack18/DeployCraft/src/trust"
 )
 
@@ -32,6 +33,7 @@ func usage() {
 	fmt.Fprintln(os.Stderr, "  build --mode folder --root . --out dist/kit-1 --private-key caminho-fora-do-repo")
 	fmt.Fprintln(os.Stderr, "  build --mode folder --root . --out dist/kit-lab --lab-unsigned")
 	fmt.Fprintln(os.Stderr, "  report --root .")
+	fmt.Fprintln(os.Stderr, "  inspect-sfx --file dist/DeployCraft-SFX.exe (integridade, não Authenticode)")
 	fmt.Fprintln(os.Stderr, "  build --mode sfx --root . --out dist/DeployCraft-SFX.exe --private-key caminho-fora-do-repo")
 	fmt.Fprintln(os.Stderr, "  SFX ainda LAB: Authenticode e teste de reinício real pendentes.")
 }
@@ -42,6 +44,23 @@ func main() {
 	}
 	command := os.Args[1]
 	switch command {
+	case "inspect-sfx":
+		f := flag.NewFlagSet("inspect-sfx", flag.ExitOnError)
+		file := f.String("file", "", "SFX Windows para validar índice e payloads")
+		_ = f.Parse(os.Args[2:])
+		if *file == "" {
+			fatal(fmt.Errorf("E-SFX-001: informe --file"))
+		}
+		reader, err := pack.OpenFile(*file)
+		if err != nil {
+			fatal(err)
+		}
+		defer reader.Close()
+		if err := reader.VerifyAll(); err != nil {
+			fatal(err)
+		}
+		fmt.Printf("SFX: %d arquivos, digest do índice: %s\n", len(reader.Files()), reader.DigestHex())
+		fmt.Println("PASS: índice e arquivos íntegros. Authenticode exige verificação separada.")
 	case "lint", "verify", "report":
 		f := flag.NewFlagSet(command, flag.ExitOnError)
 		root := f.String("root", ".", "pasta do repositório ou kit")
