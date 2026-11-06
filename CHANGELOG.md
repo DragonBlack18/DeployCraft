@@ -1,5 +1,20 @@
 # Changelog
 
+## Não liberado — Fase 4A LAB (2026-10-28)
+
+- Execução robusta com no máximo 3 novas tentativas somente para
+  `install.retryCodes`, esperas 15/30/60 s canceláveis.
+- Nova detecção Windows após cada espera; ausência de repetição se o
+  software já estiver presente.
+- Evento `step.retry` no journal, erro E-RUN-003 quando o código
+  transitório persiste, sem falso sucesso.
+- Timeout, falha ao iniciar e integridade não ativam nova tentativa.
+- Testes determinísticos de sequência de códigos, exaustão,
+  instalação externa e cancelamento.
+
+**Job Objects, MSI real e reboot em VM ainda pendentes.**
+
+
 ## Não liberado — Fase 3B (SFX em laboratório) — 2026-10-28
 
 - `kit-builder build --mode sfx` gera EXE Windows único com arquivos não comprimidos, índice JSON e rodapé com digest SHA-256. Não sobrescreve versões existentes.
