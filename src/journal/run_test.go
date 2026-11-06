@@ -14,7 +14,7 @@ func TestReadRunAndTruncatedTail(t *testing.T) {
 		t.Fatal(err)
 	}
 	events := []Event{
-		{RunID: id, Event: "run.started", KitRoot: "C:/kit", Catalog: "2026.10.1", Selection: &StoredSelection{Profile: "dev"}, Options: &StoredOptions{StopOnError: true}},
+		{RunID: id, Event: "run.started", KitRoot: "C:/kit", Catalog: "2026.10.1", CatalogDigest: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", Selection: &StoredSelection{Profile: "dev"}, Options: &StoredOptions{StopOnError: true}},
 		{RunID: id, Event: "step.finished", Package: "base", Outcome: "installed_reboot", DurationMs: 20},
 		{RunID: id, Event: "run.finished", ExitCode: intPtr(10)},
 	}
@@ -51,7 +51,7 @@ func TestCorruptedCompleteEventFailsClosed(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := s.Append(Event{RunID: id, Event: "run.started", Selection: &StoredSelection{}, Options: &StoredOptions{}, Catalog: "1", KitRoot: "C:/kit"}); err != nil {
+	if err := s.Append(Event{RunID: id, Event: "run.started", Selection: &StoredSelection{}, Options: &StoredOptions{}, Catalog: "1", CatalogDigest: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", KitRoot: "C:/kit"}); err != nil {
 		t.Fatal(err)
 	}
 	path := filepath.Join(s.Root, "state", "journal.jsonl")
@@ -84,3 +84,54 @@ func TestRunStartedMustHaveMetadata(t *testing.T) {
 	}
 }
 func intPtr(x int) *int { return &x }
+
+func TestReadRunRejectsForgedResumedMetadataAndOutcomes(t *testing.T) {
+	runID, err := NewRunID()
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Run("changed digest", func(t *testing.T) {
+		store := New(t.TempDir())
+		first := Event{RunID: runID, Event: "run.started", KitRoot: "C:/kit", Catalog: "2026.10.1", CatalogDigest: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", Selection: &StoredSelection{IDs: []string{"app"}}, Options: &StoredOptions{}}
+		if err := store.Append(first); err != nil {
+			t.Fatal(err)
+		}
+		conflict := first
+		conflict.Resumed = true
+		conflict.CatalogDigest = strings.Repeat("b", 64)
+		if err := store.Append(conflict); err != nil {
+			t.Fatal(err)
+		}
+		if _, err := store.ReadRun(runID); err == nil {
+			t.Fatal("forged catalog digest accepted")
+		}
+	})
+	t.Run("changed selection", func(t *testing.T) {
+		store := New(t.TempDir())
+		first := Event{RunID: runID, Event: "run.started", KitRoot: "C:/kit", Catalog: "2026.10.1", CatalogDigest: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", Selection: &StoredSelection{IDs: []string{"app"}}, Options: &StoredOptions{}}
+		if err := store.Append(first); err != nil {
+			t.Fatal(err)
+		}
+		second := first
+		second.Resumed = true
+		second.Selection = &StoredSelection{IDs: []string{"other"}}
+		if err := store.Append(second); err != nil {
+			t.Fatal(err)
+		}
+		if _, err := store.ReadRun(runID); err == nil {
+			t.Fatal("forged selection accepted")
+		}
+	})
+	t.Run("invalid outcome", func(t *testing.T) {
+		store := New(t.TempDir())
+		if err := store.Append(Event{RunID: runID, Event: "run.started", KitRoot: "C:/kit", Catalog: "1", CatalogDigest: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", Selection: &StoredSelection{}, Options: &StoredOptions{}}); err != nil {
+			t.Fatal(err)
+		}
+		if err := store.Append(Event{RunID: runID, Event: "step.finished", Package: "app", Outcome: "installed-signed-by-attacker"}); err != nil {
+			t.Fatal(err)
+		}
+		if _, err := store.ReadRun(runID); err == nil {
+			t.Fatal("invalid outcome accepted")
+		}
+	})
+}

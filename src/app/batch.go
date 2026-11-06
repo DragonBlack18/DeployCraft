@@ -51,6 +51,10 @@ func (e *InstallEngine) RunBatch(ctx context.Context, sel planner.Selection, opt
 	if e.KitRoot == "" || e.StateRoot == "" {
 		return report, &PreflightError{Code: "E-PRE-003", Reason: "caminho do kit ou estado ausente"}
 	}
+	catalogDigest, err := catalog.Fingerprint(e.Catalog)
+	if err != nil {
+		return report, &PreflightError{Code: "E-CAT-003", Reason: err.Error()}
+	}
 	store := journal.New(e.StateRoot)
 	previously := map[string]journal.Event{}
 	resumed := resumeID != ""
@@ -67,6 +71,9 @@ func (e *InstallEngine) RunBatch(ctx context.Context, sel planner.Selection, opt
 		}
 		if history.Start.Catalog != e.Catalog.Index.CatalogVersion {
 			return report, &PreflightError{Code: "E-RES-003", Reason: "versão do catálogo diferente da execução original"}
+		}
+		if history.Start.CatalogDigest != catalogDigest {
+			return report, &PreflightError{Code: "E-RES-003", Reason: "conteúdo do catálogo mudou; retomada bloqueada"}
 		}
 		sel = planner.Selection{Profile: history.Start.Selection.Profile, IDs: append([]string(nil), history.Start.Selection.IDs...)}
 		opt.StopOnError = history.Start.Options.StopOnError
@@ -118,7 +125,7 @@ func (e *InstallEngine) RunBatch(ctx context.Context, sel planner.Selection, opt
 	}
 	start := journal.Event{
 		RunID: report.RunID, Event: "run.started", Resumed: resumed,
-		KitRoot: e.KitRoot, Catalog: e.Catalog.Index.CatalogVersion,
+		KitRoot: e.KitRoot, Catalog: e.Catalog.Index.CatalogVersion, CatalogDigest: catalogDigest,
 		Selection: &journal.StoredSelection{Profile: sel.Profile, IDs: append([]string(nil), sel.IDs...)},
 		Options:   &journal.StoredOptions{Force: opt.Force, StopOnError: opt.StopOnError},
 	}
