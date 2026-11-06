@@ -1,0 +1,57 @@
+name: DeployCraft | Windows Job Objects
+
+on:
+  pull_request:
+    branches: [develop, main]
+    paths:
+      - 'src/runner/**'
+      - 'src/domain/**'
+      - 'go.mod'
+      - '.github/workflows/windows-job-objects.yml'
+  push:
+    branches: [develop, main]
+    paths:
+      - 'src/runner/**'
+      - 'src/domain/**'
+      - 'go.mod'
+      - '.github/workflows/windows-job-objects.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: windows-job-objects-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  native-tree-regression:
+    name: windows-job-object-tree
+    runs-on: windows-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+          cache: false
+      - name: Repeat native process-tree tests without cached results
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $log = Join-Path $env:RUNNER_TEMP 'deploycraft-job-objects.log'
+          go test -count=3 -timeout=180s -v ./src/runner 2>&1 | Tee-Object -FilePath $log
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Publish native test evidence (not an installer)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: DeployCraft-job-object-tests-${{ github.sha }}
+          path: ${{ runner.temp }}/deploycraft-job-objects.log
+          if-no-files-found: warn
+          retention-days: 14
+
+# Fixtures execute only this repository's test code. No third-party installer,
+# registry change, certificate installation or administrator elevation is used.
